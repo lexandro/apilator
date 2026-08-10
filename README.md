@@ -126,7 +126,8 @@ have to be reinstalled by hand. Keep a backup outside the repository.
 
 The boundaries are enforced by ESLint, not just documented: a view importing a service, or
 the domain importing React, fails the lint. [ARCHITECTURE.md](ARCHITECTURE.md) has the
-rationale.
+rationale, and [docs/ENGINEERING_LOG.md](docs/ENGINEERING_LOG.md) records how the codebase
+got into this shape, with the before-and-after measurements.
 
 ### Domain
 

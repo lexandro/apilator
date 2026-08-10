@@ -61,7 +61,7 @@ Write-Host "Output files:" -ForegroundColor Cyan
 if (Test-Path $exePath) {
     $exeSize = [math]::Round((Get-Item $exePath).Length / 1MB, 2)
     Write-Host "  EXE: $exePath ($exeSize MB)" -ForegroundColor White
-    Write-Host "       (Standalone - futtatható installation nelkul)" -ForegroundColor Gray
+    Write-Host "       (Standalone - runs without installing)" -ForegroundColor Gray
 }
 if (-not $ExeOnly -and (Test-Path $msiDir)) {
     $msiFiles = Get-ChildItem $msiDir -Filter "*.msi"

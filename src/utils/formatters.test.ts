@@ -96,6 +96,7 @@ describe('toHex', () => {
     expect(toHex('\x00').endsWith('  .')).toBe(true);
   });
 
+  // Test data, not prose: 'a' with an acute accent is two bytes in UTF-8, which is the point.
   it('encodes multi-byte UTF-8 characters as their real bytes', () => {
     expect(toHex('á').startsWith('c3 a1 ')).toBe(true);
   });

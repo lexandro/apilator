@@ -634,6 +634,8 @@ mod tests {
         );
     }
 
+    // Test data, not prose: the accented characters are multi-byte in UTF-8, which is what
+    // distinguishes a correct decode from a lossy one.
     #[test]
     fn utf8_bodies_are_returned_as_text() {
         let (body, encoding) = encode_body("hello árvíztűrő".as_bytes().to_vec());

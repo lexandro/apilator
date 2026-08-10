@@ -1,9 +1,9 @@
 # Apilator Setup Script
-# Ellenorzi a kornyezetet es telepiti a fuggosegeket
+# Checks the toolchain and installs dependencies
 
 Write-Host "=== Apilator Setup ===" -ForegroundColor Cyan
 
-# Ellenorzesek
+# Checks
 $errors = @()
 
 # Bun
@@ -39,7 +39,7 @@ else {
     Write-Host "  [X] Cargo not found" -ForegroundColor Red
 }
 
-# Ha hiba van, kilepes
+# Stop if anything is missing
 if ($errors.Count -gt 0) {
     Write-Host "`n=== Errors ===" -ForegroundColor Red
     foreach ($err in $errors) {
@@ -49,7 +49,7 @@ if ($errors.Count -gt 0) {
     exit 1
 }
 
-# Fuggosegek telepitese
+# Install dependencies
 Write-Host "`n=== Installing Dependencies ===" -ForegroundColor Cyan
 
 Write-Host "`nInstalling npm packages with Bun..." -ForegroundColor Yellow

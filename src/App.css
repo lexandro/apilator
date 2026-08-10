@@ -103,7 +103,7 @@ body.resizing .response-body-content {
   justify-content: center;
 }
 
-/* Vékony csík a teljes peremen */
+/* Thin bar along the whole edge */
 .resize-handle::before {
   content: '';
   background-color: var(--color-border);
@@ -118,7 +118,7 @@ body.resizing .response-body-content {
   cursor: col-resize;
 }
 
-/* Függőleges csík végig (sidebar resizer) */
+/* Full-height bar (sidebar resizer) */
 .resize-handle--horizontal::before {
   width: 1px;
   height: 100%;
@@ -132,13 +132,13 @@ body.resizing .response-body-content {
   cursor: row-resize;
 }
 
-/* Vízszintes csík végig (request/response resizer) */
+/* Full-width bar (request/response resizer) */
 .resize-handle--vertical::before {
   width: 100%;
   height: 1px;
 }
 
-/* Hover és active állapot - világos szín */
+/* Hover and active state */
 .resize-handle:hover::before,
 body.resizing .resize-handle::before {
   background-color: #9ca3af;

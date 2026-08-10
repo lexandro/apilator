@@ -1,7 +1,7 @@
 # ============================================================
 # Apilator Dev Environment Setup - Windows 11
 # ============================================================
-# Futtatás: PowerShell-t ADMINISZTRATORKENT nyisd meg, majd:
+# Run: open PowerShell AS ADMINISTRATOR, then:
 #   Set-ExecutionPolicy Bypass -Scope Process -Force
 #   .\setup-dev-environment.ps1
 # ============================================================
@@ -15,18 +15,18 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ------------------------------------------------------------
-# 1. Ellenőrzés: Admin jogok
+# 1. Check: administrator rights
 # ------------------------------------------------------------
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
-    Write-Host "[HIBA] A scriptet ADMINISZTRATORKENT kell futtatni!" -ForegroundColor Red
+    Write-Host "[ERROR] This script must be run AS ADMINISTRATOR" -ForegroundColor Red
     Write-Host "       Jobb klikk PowerShell -> Run as Administrator" -ForegroundColor Yellow
     exit 1
 }
 Write-Host "[OK] Admin jogok megvannak" -ForegroundColor Green
 
 # ------------------------------------------------------------
-# 2. Winget ellenőrzés
+# 2. Check: winget
 # ------------------------------------------------------------
 Write-Host ""
 Write-Host "[1/6] Winget ellenorzese..." -ForegroundColor Yellow
@@ -34,7 +34,7 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     $wingetVersion = winget --version
     Write-Host "      Winget: $wingetVersion" -ForegroundColor Green
 } else {
-    Write-Host "[HIBA] Winget nem talalhato. Windows 11-en alapbol kell legyen." -ForegroundColor Red
+    Write-Host "[ERROR] winget not found. It ships with Windows 11 by default." -ForegroundColor Red
     Write-Host "       Microsoft Store-bol telepitsd: 'App Installer'" -ForegroundColor Yellow
     exit 1
 }
@@ -46,7 +46,7 @@ Write-Host ""
 Write-Host "[2/6] Visual Studio Build Tools telepitese..." -ForegroundColor Yellow
 Write-Host "      (Ez a leghosszabb lepes, 5-15 perc)" -ForegroundColor Gray
 
-# Ellenőrizzük, hogy már telepítve van-e
+# Skip if it is already installed
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 $vsInstalled = $false
 
@@ -54,22 +54,22 @@ if (Test-Path $vsWhere) {
     $vsInstallations = & $vsWhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json | ConvertFrom-Json
     if ($vsInstallations.Count -gt 0) {
         $vsInstalled = $true
-        Write-Host "      Visual Studio Build Tools mar telepitve van" -ForegroundColor Green
+        Write-Host "      Visual Studio Build Tools already installed" -ForegroundColor Green
     }
 }
 
 if (-not $vsInstalled) {
     Write-Host "      Telepites indul... (ne zard be az ablakot!)" -ForegroundColor Cyan
     
-    # Winget-tel telepítjük a Build Tools-t
+    # Install Build Tools via winget
     winget install Microsoft.VisualStudio.2022.BuildTools --silent --accept-package-agreements --accept-source-agreements
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
         Write-Host "[FIGYELEM] A Build Tools alaptelepites befejezodott." -ForegroundColor Yellow
-        Write-Host "           Most MANUÁLISAN kell hozzaadni a C++ komponenseket:" -ForegroundColor Yellow
+        Write-Host "           The C++ components must now be added MANUALLY:" -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "  1. Nyisd meg: Visual Studio Installer" -ForegroundColor White
+        Write-Host "  1. Open: Visual Studio Installer" -ForegroundColor White
         Write-Host "     (Start menu -> 'Visual Studio Installer')" -ForegroundColor Gray
         Write-Host ""
         Write-Host "  2. Build Tools 2022 -> Modify" -ForegroundColor White
@@ -85,7 +85,7 @@ if (-not $vsInstalled) {
     }
 }
 
-# C++ workload hozzáadása (ha még nincs)
+# Add the C++ workload if it is missing
 Write-Host "      C++ workload ellenorzese es telepitese..." -ForegroundColor Cyan
 $vsInstallerPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
 
@@ -94,23 +94,23 @@ if (Test-Path $vsInstallerPath) {
     Start-Process -FilePath $vsInstallerPath -ArgumentList "modify", "--installPath", "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools", "--add", "Microsoft.VisualStudio.Workload.VCTools", "--includeRecommended", "--quiet", "--norestart" -Wait -NoNewWindow
     Write-Host "      C++ workload telepitve/frissitve" -ForegroundColor Green
 } else {
-    Write-Host "      [INFO] VS Installer nem talalhato a vart helyen" -ForegroundColor Yellow
-    Write-Host "             Manualis telepites szukseges lehet" -ForegroundColor Yellow
+    Write-Host "      [INFO] VS Installer not found where expected" -ForegroundColor Yellow
+    Write-Host "             Manual installation may be required" -ForegroundColor Yellow
 }
 
 # ------------------------------------------------------------
-# 4. Rust telepítés (rustup)
+# 4. Install Rust (rustup)
 # ------------------------------------------------------------
 Write-Host ""
 Write-Host "[3/6] Rust telepitese (rustup)..." -ForegroundColor Yellow
 
 if (Get-Command rustc -ErrorAction SilentlyContinue) {
     $rustVersion = rustc --version
-    Write-Host "      Rust mar telepitve: $rustVersion" -ForegroundColor Green
+    Write-Host "      Rust already installed: $rustVersion" -ForegroundColor Green
 } else {
     Write-Host "      Rust telepitese indul..." -ForegroundColor Cyan
     
-    # Rustup letöltése és futtatása
+    # Download and run rustup
     $rustupUrl = "https://win.rustup.rs/x86_64"
     $rustupExe = "$env:TEMP\rustup-init.exe"
     
@@ -121,22 +121,22 @@ if (Get-Command rustc -ErrorAction SilentlyContinue) {
     # -y = no prompts, default options
     Start-Process -FilePath $rustupExe -ArgumentList "-y", "--default-toolchain", "stable" -Wait -NoNewWindow
     
-    # Környezeti változók frissítése az aktuális sessionben
+    # Refresh the environment variables for this session
     $env:Path = "$env:USERPROFILE\.cargo\bin;" + $env:Path
     
-    # Ellenőrzés
+    # Verify
     if (Get-Command rustc -ErrorAction SilentlyContinue) {
         $rustVersion = rustc --version
         Write-Host "      Rust sikeresen telepitve: $rustVersion" -ForegroundColor Green
     } else {
-        Write-Host "      [FIGYELEM] Rust telepult, de uj terminal kell az eleresehez" -ForegroundColor Yellow
+        Write-Host "      [WARNING] Rust installed, but a new terminal is needed to reach it" -ForegroundColor Yellow
     }
     
     Remove-Item $rustupExe -ErrorAction SilentlyContinue
 }
 
 # ------------------------------------------------------------
-# 5. WebView2 Runtime ellenőrzés
+# 5. Check: WebView2 Runtime
 # ------------------------------------------------------------
 Write-Host ""
 Write-Host "[4/6] WebView2 Runtime ellenorzese..." -ForegroundColor Yellow
@@ -145,7 +145,7 @@ $webview2Key = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F301722
 $webview2Installed = Test-Path $webview2Key
 
 if ($webview2Installed) {
-    Write-Host "      WebView2 Runtime telepitve van" -ForegroundColor Green
+    Write-Host "      WebView2 Runtime is installed" -ForegroundColor Green
 } else {
     Write-Host "      WebView2 telepitese..." -ForegroundColor Cyan
     winget install Microsoft.EdgeWebView2Runtime --silent --accept-package-agreements
@@ -153,7 +153,7 @@ if ($webview2Installed) {
 }
 
 # ------------------------------------------------------------
-# 6. Bun ellenőrzés
+# 6. Check: Bun
 # ------------------------------------------------------------
 Write-Host ""
 Write-Host "[5/6] Bun ellenorzese..." -ForegroundColor Yellow
@@ -164,11 +164,11 @@ if (Get-Command bun -ErrorAction SilentlyContinue) {
 } else {
     Write-Host "      Bun telepitese..." -ForegroundColor Cyan
     winget install Oven-sh.Bun --silent --accept-package-agreements
-    Write-Host "      Bun telepitve (uj terminal kell a hasznalathoz)" -ForegroundColor Green
+    Write-Host "      Bun installed (a new terminal is needed to use it)" -ForegroundColor Green
 }
 
 # ------------------------------------------------------------
-# 7. Git ellenőrzés
+# 7. Check: Git
 # ------------------------------------------------------------
 Write-Host ""
 Write-Host "[6/6] Git ellenorzese..." -ForegroundColor Yellow
@@ -183,7 +183,7 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 }
 
 # ------------------------------------------------------------
-# Összefoglaló
+# Summary
 # ------------------------------------------------------------
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
@@ -202,7 +202,7 @@ Write-Host "  Rust:  $env:USERPROFILE\.cargo" -ForegroundColor Gray
 Write-Host "         $env:USERPROFILE\.rustup" -ForegroundColor Gray
 Write-Host ""
 Write-Host "[FONTOS] INDITSD UJRA A TERMINALT / VS CODE-ot!" -ForegroundColor Yellow
-Write-Host "         Vagy futtasd: refreshenv (ha Chocolatey-d van)" -ForegroundColor Yellow
+Write-Host "         Or run: refreshenv (if you have Chocolatey)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Ellenorzes uj terminalban:" -ForegroundColor White
 Write-Host "  rustc --version" -ForegroundColor Cyan
@@ -211,7 +211,7 @@ Write-Host "  bun --version" -ForegroundColor Cyan
 Write-Host ""
 
 # ------------------------------------------------------------
-# Opcionális: Tauri CLI telepítés
+# Optional: install the Tauri CLI
 # ------------------------------------------------------------
 Write-Host "Szeretned most telepiteni a Tauri CLI-t is? (I/N): " -ForegroundColor Yellow -NoNewline
 $installTauri = Read-Host
@@ -221,7 +221,7 @@ if ($installTauri -eq "I" -or $installTauri -eq "i") {
     Write-Host "Tauri CLI telepitese cargo-val..." -ForegroundColor Cyan
     Write-Host "(Ez 2-5 percig tarthat, Rust-bol fordit)" -ForegroundColor Gray
     
-    # Frissítjük a PATH-ot hogy a cargo elérhető legyen
+    # Refresh PATH so cargo is reachable
     $env:Path = "$env:USERPROFILE\.cargo\bin;" + $env:Path
     
     cargo install tauri-cli --version "^2.0.0"

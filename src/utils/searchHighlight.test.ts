@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { normalizeString, findMatches, DEFAULT_MAX_MATCHES } from './searchHighlight';
 
+// The Hungarian strings below are test data, not prose: normalizeString exists to strip
+// diacritics, and Hungarian carries the double acute accents that catch naive
+// implementations. Translating them would remove what is being tested.
 describe('normalizeString', () => {
   it('lowercases', () => {
     expect(normalizeString('ABC')).toBe('abc');

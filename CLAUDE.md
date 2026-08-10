@@ -1,256 +1,111 @@
 # Apilator
 
-RESTful API tesztelő kliens Windows-ra.
+A REST API testing client for Windows. Tauri v2 + React 18 + TypeScript, package-managed
+with Bun.
 
-## Kommunikáció
+## Working language
 
-- **Nyelv**: Magyar
-- **Fontos**: Ne feltételezz, hanem kérdezz!
+Conversation with the maintainer is in Hungarian. **Everything in the repository is in
+English** — code, comments, tests, documentation and commit messages.
 
-## Tech Stack
+Do not assume; ask when a decision would change the work.
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Backend**: Rust + Tauri v2
-- **Package Manager**: Bun (nem npm!)
-- **Platform**: Windows desktop
+## Where things are
 
-## Architektúra
+`ARCHITECTURE.md` has the layers, the module map and the import rules. `README.md` has the
+feature list, the commands and the release process. Do not duplicate either here.
 
-MVVM + Zustand Stores pattern. Részletes dokumentáció: `ARCHITECTURE.md`
-
-```
-Views → Stores → Services → Domain
-```
-
-| Réteg | Mappa | Felelősség |
-|-------|-------|------------|
-| Views | `src/views/` | React komponensek (csak UI) |
-| Stores | `src/stores/` | Zustand state + business logic |
-| Services | `src/services/` | Tauri/külső integrációk |
-| Domain | `src/domain/` | Típusok, factory-k |
-| Hooks | `src/hooks/` | UI helper hook-ok |
-
-## Projekt Struktúra
-
-```
-src/
-├── domain/           # Típusok és factory-k
-├── stores/           # Zustand state management
-├── services/         # Tauri integrációk
-├── views/            # React komponensek
-├── hooks/            # UI hook-ok
-├── utils/            # Pure utility függvények
-├── styles/           # Globális stílusok
-├── App.tsx           # Fő app komponens
-└── main.tsx          # Entry point
-
-src-tauri/            # Rust/Tauri backend
-  src/lib.rs          # Tauri commands
-  src/main.rs         # Entry point
-
-docs/                 # Dokumentáció
-scripts/              # PowerShell helper scriptek
-```
-
-### "Hol Keressem?" Gyorskalauz
-
-| Keresem... | Hely |
-|------------|------|
-| Tab műveletek | `stores/tabsStore.ts` |
-| History kezelés | `stores/historyStore.ts` |
-| Settings (theme, proxy) | `stores/settingsStore.ts` |
-| HTTP kérés küldés | `services/httpService.ts` |
-| Request/Response típusok | `domain/request.ts`, `domain/response.ts` |
-| UI komponensek | `views/` megfelelő almappa |
-
-## Fejlesztési Parancsok
+## Commands
 
 ```powershell
-bun install           # Függőségek telepítése
-bun run dev           # Dev szerver indítása
-bun run vite build    # Frontend build (gyors)
-bunx tsc --noEmit     # TypeScript típusellenőrzés
+bun install
+bun run dev            # Tauri dev
+bun run check          # typecheck + lint + tests with coverage thresholds
+bun run vite build     # frontend only, fast
+
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo test --manifest-path src-tauri/Cargo.toml -- --ignored   # network-dependent
 ```
 
-### Bash parancsok és Windows útvonalak
+All of these run in CI. Run `bun run check` and the two cargo commands as the **last** step
+before committing, not in the middle — a change made after the last run is a change nobody
+verified. That gap is how a clippy failure once reached CI.
 
-**FONTOS**: Ne használj `cd` parancsot abszolút Windows útvonalakkal bash-ben!
+### Bash and Windows paths
+
+Do not `cd` to an absolute Windows path in bash; use a relative path or a flag.
 
 ```bash
-# ❌ ROSSZ - nem működik
+# wrong
 cd C:\projects\apps\apilator\src-tauri && cargo check
 
-# ✅ JÓ - relatív útvonal vagy flag használata
+# right
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
-A working directory a projekt gyökere (`C:\projects\apps\apilator`), használj relatív útvonalakat.
+The working directory is the project root.
 
-## Production Build
+### Renaming or moving files
+
+Vite and the running app lock files on Windows. Stop them first:
 
 ```powershell
-# Teljes build (EXE + MSI installer)
-bun run build
-# vagy
-.\scripts\build.ps1
-
-# Csak EXE (gyorsabb, installer nélkül)
-.\scripts\build.ps1 -ExeOnly
-
-# Build és mappa megnyitása
-.\scripts\build.ps1 -OpenFolder
-.\scripts\build.ps1 -ExeOnly -OpenFolder
+taskkill //F //IM "node.exe"
+taskkill //F //IM "apilator.exe"
 ```
 
-### Output fájlok
-- **EXE**: `target/release/apilator.exe` (standalone, futtatható install nélkül)
-- **MSI**: `target/release/bundle/msi/` (Windows installer)
+## What this project expects
 
-### Verziókezelés
-A verzió a `src-tauri/tauri.conf.json` fájlban van:
-```json
-{
-  "version": "0.1.0"
-}
-```
+**Never ship a control that does nothing.** A settings toggle that is not wired up, a body
+type that silently sends nothing, an auth method that produces no header — most of this
+project's history was spent removing exactly that. If a feature cannot be finished, remove
+its UI rather than leaving it as decoration.
 
+**Tests that would fail without the change.** A test that passes whether or not the code is
+correct reads as coverage while providing none. After fixing a bug, break the fix on purpose
+once and confirm the test goes red. Several tests here exist because that step found the
+first attempt toothless.
 
-## Kódminőségi Elvek
+**Measure, do not assume.** Performance and memory claims need numbers and a stated method.
+An empty or zero measurement is not evidence until the probe itself is shown to work — a
+probe that finds nothing because it is broken looks exactly like one that finds nothing
+because there is nothing to find.
 
-### KISS (Keep It Simple, Stupid)
-- Egyszerű, érthető megoldások előnyben
-- Ne bonyolítsd túl - ha nehéz elmagyarázni, valószínűleg túl komplex
-- Egy függvény = egy feladat
+**Respect the layer boundaries.** ESLint enforces them, so a violation fails the build
+rather than waiting to be noticed in review.
 
-### Clean Code
-- Beszédes változó- és függvénynevek (a kód legyen önmagát dokumentáló)
-- Rövid függvények (max 20-30 sor)
-- Kerüld a mély nesting-et (max 2-3 szint)
-- DRY (Don't Repeat Yourself) - de ne erőltesd az absztrakciót 2 ismétlés alatt
+## Conventions
 
-### SOLID Elvek
-- **S**ingle Responsibility: Egy komponens/hook = egy felelősség
-- **O**pen/Closed: Bővíthető legyen új funkciókkal, de ne kelljen meglévőt módosítani
-- **L**iskov Substitution: (TypeScript-ben kevésbé releváns)
-- **I**nterface Segregation: Kis, célzott prop interface-ek
-- **D**ependency Inversion: Hook-ok és callback-ek a függőségekhez
+- Zustand stores for state and the logic around it, not custom hooks holding `useState`
+- A component with five or more callback props should read the store directly instead
+- Functional components, TypeScript strict mode, one component per file with its CSS beside it
+- Rust: Tauri commands in `lib.rs`, `#[tauri::command]` on each, serde for serialisation
+- Refactor when a file passes ~200 lines, a component ~100 lines of JSX, or a hook takes on
+  a second responsibility
 
-### Refaktorálási Jelek
-Azonnal refaktorálj, ha:
-- Egy fájl > 200 sor
-- Egy komponens > 100 sor JSX
-- Egy hook > 5 különböző felelősséget kezel
-- Copy-paste kód jelenik meg
-- Túl sok prop drilling (3+ szint)
+### Comments
 
-## Konvenciók
+Comments are for what the code cannot say: a non-obvious invariant, the reason for a
+workaround, a mechanism that has to be revisited later. Not a restatement of the next line.
+Default to no comment.
 
-### Frontend (TypeScript/React)
-- Functional components + hooks
-- TypeScript strict mode
-- CSS fájlok komponensenként
-- Komponensek max 1 fájl = 1 komponens (+ styled subcomponents)
+## Tauri IPC
 
-### Backend (Rust)
-- Tauri commands a `lib.rs`-ben
-- `#[tauri::command]` attribútum minden API-hoz
-- Serde a szerializációhoz
-
-### Tauri IPC
 ```typescript
-// Frontend hívás
-import { invoke } from "@tauri-apps/api/core";
-const result = await invoke<ResponseType>("command_name", { param: value });
+import { invoke } from '@tauri-apps/api/core';
+const result = await invoke<ResponseType>('command_name', { param: value });
 ```
 
 ```rust
-// Backend command
 #[tauri::command]
 fn command_name(param: String) -> Result<ResponseType, String> {
     // ...
 }
 ```
 
-## Fő Funkciók (tervezett)
+## Releasing
 
-- HTTP kérések küldése (GET, POST, PUT, DELETE, PATCH)
-- Request/Response history
-- Környezetek és változók kezelése
-- Request collections mentése
-- JSON/XML response formázás
-
----
-
-## Tanulságok és Szabályok
-
-> Refaktorálások és fejlesztések során felmerült problémák elkerülésére
-
-### Fájl átnevezés/áthelyezés
-
-**Probléma:** Windows-on a dev server (Vite/Node) lock-olja a fájlokat, ezért `mv` és `Rename-Item` nem működik.
-
-**Megoldás:**
-```powershell
-# 1. Először állítsd le a dev szervert
-taskkill //F //IM "node.exe"
-taskkill //F //IM "apilator.exe"
-
-# 2. Majd végezd el az átnevezést
-```
-
-### Zustand Store Pattern
-
-**Szabály:** Ha állapotot és annak műveleteit kezeled, használj Zustand store-t, ne custom hook-ot.
-
-```typescript
-// ✅ JÓ - Store pattern
-export const useMyStore = create<MyState>((set, get) => ({
-  data: [],
-  addItem: (item) => set((s) => ({ data: [...s.data, item] })),
-}));
-
-// ⚠️ KERÜLENDŐ - Custom hook state-tel
-export function useMyData() {
-  const [data, setData] = useState([]);
-  const addItem = useCallback((item) => { ... }, []);
-  return { data, addItem };
-}
-```
-
-### Import Szabályok Betartatása
-
-| Réteg | Importálhat | NEM importálhat |
-|-------|-------------|-----------------|
-| Views | stores, domain, hooks | services |
-| Stores | services, domain | views |
-| Services | domain | stores, views |
-| Domain | SEMMI | minden más |
-
-**Ellenőrzés:** `grep -r "from ['\"]\.\.\/services" src/views/` - nem szabad találatot adnia
-
-### Prop Drilling Alternatívája
-
-Ha egy komponensnek sok (5+) callback prop-ja van, fontold meg:
-1. A komponens közvetlenül használja a store-t
-2. Vagy context-et a callback-eknek
-
-```typescript
-// ⚠️ Sok prop
-<TabBar
-  onSelect={...} onClose={...} onRename={...}
-  onColorChange={...} onDuplicate={...} onReorder={...}
-/>
-
-// ✅ Store használat a komponensben
-function TabBar() {
-  const { selectTab, closeTab } = useTabsStore();
-  // ...
-}
-```
-
-### Refaktorálás Közben
-
-1. **Mindig TypeScript check futtatása** - minden fázis után `bunx tsc --noEmit`
-2. **Dev server leállítása** - fájlműveletek előtt
-3. **Inkrementális változtatások** - egy fájl/mappa egyszerre
-4. **Import utak frissítése** - grep-pel ellenőrizd a régi import-okat
+The version lives in three files that must agree: `package.json`,
+`src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`. Pushing a `v*` tag builds the signed
+installers and publishes a GitHub Release; `README.md` has the detail.
