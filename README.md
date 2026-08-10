@@ -220,9 +220,15 @@ files. They go to the Windows Credential Manager.
 
 ## Icons
 
+`assets/app_icon_trimmed.png` is the master artwork. Everything under `src-tauri/icons/` is
+generated from it and should not be edited by hand:
+
 ```powershell
-bunx tauri icon src-tauri/icons/icon.png
+bunx tauri icon assets/app_icon_trimmed.png
 ```
+
+Regenerate from the master, not from `src-tauri/icons/icon.png` — that file is itself an
+output, squared off and downscaled, so using it as the input loses a little more each time.
 
 ## Licence
 
