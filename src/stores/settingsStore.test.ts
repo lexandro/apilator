@@ -4,7 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
 import { invoke } from '@tauri-apps/api/core';
-import { useSettingsStore, migrateSettings, SETTINGS_VERSION } from './settingsStore';
+import {
+  useSettingsStore,
+  migrateSettings,
+  completeGeneralSettings,
+  SETTINGS_VERSION,
+} from './settingsStore';
 import { SECRET_KEYS } from '../services';
 import { DEFAULT_PROXY_SETTINGS, DEFAULT_GENERAL_SETTINGS } from '../domain';
 
@@ -156,30 +161,83 @@ describe('getGeneralSettings', () => {
     expect(store().getGeneralSettings().verifyTls).toBe(false);
   });
 
+  // Zustand compares selector results with Object.is. A getter that built a fresh object
+  // on every call made every snapshot look new, and any component selecting it re-rendered
+  // until React gave up with "Maximum update depth exceeded" - a blank window. Shipped in
+  // 0.9.0 and it made the whole Settings screen unreachable.
+  it('returns the same reference until the settings actually change', () => {
+    expect(store().getGeneralSettings()).toBe(store().getGeneralSettings());
+  });
+
+  it('returns a new reference once they do change', () => {
+    const before = store().getGeneralSettings();
+    store().updateGeneralSettings({ verifyTls: false });
+
+    expect(store().getGeneralSettings()).not.toBe(before);
+  });
+});
+
+// ============================================================
+// B1 - a partial stored blob must not silently disable TLS verification
+// ============================================================
+
+describe('completeGeneralSettings', () => {
   it('fills in keys missing from a settings blob written by an older build', () => {
     const older = { ...DEFAULT_GENERAL_SETTINGS } as Partial<typeof DEFAULT_GENERAL_SETTINGS>;
     delete older.verifyTls;
-    useSettingsStore.setState({ general: older as typeof DEFAULT_GENERAL_SETTINGS });
 
-    expect(store().getGeneralSettings().verifyTls).toBe(true);
+    expect(completeGeneralSettings(older).verifyTls).toBe(true);
   });
 
-  it('treats an explicit null in the stored blob as absent, not as off', () => {
+  it('treats an explicit null as absent, not as off', () => {
     // JSON cannot hold undefined but it can hold null, and null must not silently
     // disable certificate verification.
-    useSettingsStore.setState({
-      general: { ...DEFAULT_GENERAL_SETTINGS, verifyTls: null as unknown as boolean },
-    });
-
-    expect(store().getGeneralSettings().verifyTls).toBe(true);
+    expect(completeGeneralSettings({ verifyTls: null }).verifyTls).toBe(true);
   });
 
   it('treats an explicit undefined the same way', () => {
-    useSettingsStore.setState({
-      general: { ...DEFAULT_GENERAL_SETTINGS, verifyTls: undefined as unknown as boolean },
-    });
+    expect(completeGeneralSettings({ verifyTls: undefined }).verifyTls).toBe(true);
+  });
 
-    expect(store().getGeneralSettings().verifyTls).toBe(true);
+  it('keeps values that are legitimately falsy', () => {
+    expect(completeGeneralSettings({ verifyTls: false }).verifyTls).toBe(false);
+  });
+
+  it('survives a blob that is not an object at all', () => {
+    expect(completeGeneralSettings(null).verifyTls).toBe(true);
+    expect(completeGeneralSettings('nonsense').verifyTls).toBe(true);
+  });
+});
+
+describe('rehydration completes a partial stored blob', () => {
+  // The real path: what localStorage holds goes through migrate and then merge. This is
+  // where the gap-filling now happens, so this is where it has to be proven.
+  async function rehydrateWith(general: unknown) {
+    localStorage.setItem(
+      PERSIST_KEY,
+      JSON.stringify({ state: { general }, version: SETTINGS_VERSION })
+    );
+    await useSettingsStore.persist.rehydrate();
+  }
+
+  it('turns verification back on when the stored blob left it null', async () => {
+    await rehydrateWith({ ...DEFAULT_GENERAL_SETTINGS, verifyTls: null });
+
+    expect(store().general.verifyTls).toBe(true);
+  });
+
+  it('fills in a key the stored blob never had', async () => {
+    const older = { ...DEFAULT_GENERAL_SETTINGS } as Partial<typeof DEFAULT_GENERAL_SETTINGS>;
+    delete older.requestTimeout;
+    await rehydrateWith(older);
+
+    expect(store().general.requestTimeout).toBe(DEFAULT_GENERAL_SETTINGS.requestTimeout);
+  });
+
+  it('leaves a deliberate choice alone', async () => {
+    await rehydrateWith({ ...DEFAULT_GENERAL_SETTINGS, verifyTls: false });
+
+    expect(store().general.verifyTls).toBe(false);
   });
 });
 

@@ -69,9 +69,11 @@ export function AboutSection() {
         <InfoRow label="Tauri" value={tauriVersion || '...'} />
       </div>
 
-      <div className="about-info-group about-tbd">
-        <InfoRow label="GitHub" value="TBD" placeholder />
-        <InfoRow label="License" value="TBD" placeholder />
+      <div className="about-info-group">
+        {/* Plain text, not a link: there is no opener plugin, so an anchor would
+            navigate the app's own webview away from the UI. */}
+        <InfoRow label="GitHub" value="github.com/lexandro/apilator" />
+        <InfoRow label="License" value="MIT" />
       </div>
 
       <div className="about-actions">
@@ -83,13 +85,11 @@ export function AboutSection() {
   );
 }
 
-function InfoRow({ label, value, mono, placeholder }: { label: string; value: string; mono?: boolean; placeholder?: boolean }) {
+function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="about-info-row">
       <span className="about-info-label">{label}</span>
-      <span className={`about-info-value ${mono ? 'about-mono' : ''} ${placeholder ? 'about-placeholder' : ''}`}>
-        {value}
-      </span>
+      <span className={`about-info-value ${mono ? 'about-mono' : ''}`}>{value}</span>
     </div>
   );
 }

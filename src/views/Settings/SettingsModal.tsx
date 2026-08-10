@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SettingsIcon, ThemesIcon, ProxyIcon, AboutIcon, CloseIcon } from './icons';
 import type { UpdaterState } from '../../hooks';
+import { ErrorBoundary } from '../common';
 import { GeneralSection } from './sections/GeneralSection';
 import { ThemesSection } from './sections/ThemesSection';
 import { ProxySection } from './sections/ProxySection';
@@ -91,7 +92,10 @@ export function SettingsModal({
             <CloseIcon />
           </button>
           <div className="settings-content-inner">
-            {renderContent()}
+            {/* Keyed so switching section clears a previous section's error. */}
+            <ErrorBoundary key={activeSection} label="This settings section failed to load">
+              {renderContent()}
+            </ErrorBoundary>
           </div>
         </div>
       </div>

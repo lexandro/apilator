@@ -1,0 +1,77 @@
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  margin: auto;
+  max-width: 640px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.error-boundary__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-error);
+}
+
+.error-boundary__message {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.error-boundary__actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.error-boundary__button {
+  padding: 6px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.error-boundary__button:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-hover);
+}
+
+.error-boundary__button--primary {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.error-boundary__button--primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.error-boundary__details {
+  align-self: stretch;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.error-boundary__details summary {
+  cursor: pointer;
+}
+
+.error-boundary__stack {
+  margin: var(--spacing-md) 0 0;
+  padding: var(--spacing-md);
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
+}

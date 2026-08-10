@@ -26,3 +26,6 @@ export { Dropdown } from './Dropdown';
 export type { DropdownOption } from './Dropdown';
 export { FormDataEditor } from './FormDataEditor';
 export type { FormDataEditorProps } from './FormDataEditor';
+
+export { ErrorBoundary } from './ErrorBoundary';
+export type { ErrorBoundaryProps } from './ErrorBoundary';

@@ -5,6 +5,28 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-08-10
+
+### Fixed
+
+- Opening Settings blanked the window. `getGeneralSettings()` built a fresh object on every
+  call and the General section used it as a Zustand selector; since Zustand 5 compares
+  selector results with `Object.is`, every snapshot looked new and React re-rendered until it
+  gave up with error #185. The uncaught error then unmounted the whole tree, which is why the
+  window emptied rather than showing anything. The stored settings are now completed once at
+  load, so the getter returns a stable reference
+
+### Added
+
+- An error boundary at the app root and around each settings section. A render error now
+  shows what failed, with the stack behind a disclosure and a way to retry, instead of
+  leaving an empty window with nothing to go on
+- About lists the repository and the licence, which were placeholders reading "TBD"
+
+### Changed
+
+- The changelog no longer repeats its own title inside the Settings view
+
 ## [0.9.1] - 2026-08-10
 
 No functional changes. This release exists to exercise the update mechanism end to end,

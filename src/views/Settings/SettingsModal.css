@@ -856,10 +856,6 @@
   overflow: hidden;
 }
 
-.about-info-group.about-tbd {
-  opacity: 0.6;
-}
-
 .about-info-row {
   display: flex;
   align-items: center;
@@ -885,11 +881,6 @@
 
 .about-info-value.about-mono {
   font-family: var(--font-mono);
-}
-
-.about-info-value.about-placeholder {
-  color: var(--color-text-muted);
-  font-style: italic;
 }
 
 /* Actions */

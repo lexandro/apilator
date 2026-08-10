@@ -5,7 +5,8 @@ import changelog from '../../../../CHANGELOG.md?raw';
 function renderLine(line: string, index: number) {
   if (line.startsWith('### ')) return <h4 key={index}>{line.slice(4)}</h4>;
   if (line.startsWith('## ')) return <h3 key={index}>{line.slice(3)}</h3>;
-  if (line.startsWith('# ')) return <h2 key={index}>{line.slice(2)}</h2>;
+  // The section supplies its own title, so the document's H1 would just repeat it.
+  if (line.startsWith('# ')) return null;
   if (line.startsWith('- ')) return <li key={index}>{line.slice(2)}</li>;
   if (!line.trim()) return null;
   return <p key={index}>{line}</p>;

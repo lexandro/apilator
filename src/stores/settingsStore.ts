@@ -68,6 +68,27 @@ interface SettingsState {
 export const SETTINGS_VERSION = 1;
 
 /**
+ * Persisted settings from an older build can be missing newer keys, and a hand-edited or
+ * partially written blob can hold explicit nulls. Both must fall back to the default
+ * rather than reaching the request layer as undefined. This runs once per rehydration,
+ * not on every read, so the stored object stays a stable reference.
+ */
+export function completeGeneralSettings(stored: unknown): GeneralSettings {
+  const complete: GeneralSettings = { ...DEFAULT_GENERAL_SETTINGS };
+  if (typeof stored !== 'object' || stored === null) return complete;
+
+  const partial = stored as Record<string, unknown>;
+  for (const key of Object.keys(complete) as (keyof GeneralSettings)[]) {
+    const value = partial[key];
+    if (value !== undefined && value !== null) {
+      Object.assign(complete, { [key]: value });
+    }
+  }
+
+  return complete;
+}
+
+/**
  * v0 shipped the General settings without wiring them up, so whatever is stored there
  * never affected a request. requestTimeout in particular defaulted to 0, which now means
  * "wait forever" - existing users would silently lose the 30s timeout they used to get.
@@ -229,23 +250,11 @@ export const useSettingsStore = create<SettingsState>()(
         }));
       },
 
-      // Persisted settings from an older build can be missing newer keys, and a
-      // hand-edited or partially written blob can hold explicit nulls. Both must fall
-      // back to the default rather than reaching the request layer as undefined.
-      getGeneralSettings: () => {
-        const stored = get().general;
-        const merged: GeneralSettings = { ...DEFAULT_GENERAL_SETTINGS };
-        if (!stored) return merged;
-
-        for (const key of Object.keys(merged) as (keyof GeneralSettings)[]) {
-          const value = stored[key];
-          if (value !== undefined && value !== null) {
-            Object.assign(merged, { [key]: value });
-          }
-        }
-
-        return merged;
-      },
+      // Returns the stored object itself. completeGeneralSettings() has already filled in
+      // the gaps at rehydration, so this must not build a new object: the return value is
+      // used as a Zustand selector result, and a fresh object every call makes the
+      // Object.is snapshot check fail forever, which spins React until it gives up.
+      getGeneralSettings: () => get().general,
 
       // UI Actions
       toggleSidebar: () => {
@@ -261,6 +270,10 @@ export const useSettingsStore = create<SettingsState>()(
       version: SETTINGS_VERSION,
       storage: createJSONStorage(() => localStorage),
       migrate: migrateSettings,
+      merge: (persisted, current) => {
+        const state = { ...current, ...(persisted as Partial<SettingsState>) };
+        return { ...state, general: completeGeneralSettings(state.general) };
+      },
       // Passwords are deliberately blanked here: they belong in the OS credential
       // store, and hydrateSecrets() puts them back at startup.
       partialize: (state) => ({
