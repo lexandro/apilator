@@ -1278,7 +1278,7 @@ véd.
 |---|-------|---------|
 | 15 | Dokumentáció összevonása a README-be | ✅ kész |
 | 16 | Auto-update és Help felület | ✅ kész |
-| 17 | GitHub költözés és release pipeline | 🟡 |
+| 17 | GitHub költözés és release pipeline | ✅ kész |
 
 ---
 
@@ -1365,7 +1365,7 @@ amit az mdedit kommentje is jelez.
 - [x] 17.4 README, CONTRIBUTING, SECURITY átírva GitHubra
 - [x] 17.5 Repó létrehozva és feltöltve history nélkül (**privátként**, lásd napló)
 - [x] 17.6 Aláíró secretek felvéve
-- [ ] 17.7 Első release tag
+- [x] 17.7 Első release tag
 
 ### Napló
 
@@ -1400,3 +1400,36 @@ Két kép menet közben bekerült egy `git add -A`-val, és kikerült: az `app_i
 hivatkozza, de a `public/` miatt a telepítőbe került volna).
 
 **Az első GitHub CI zöld**, mindkét jobbal.
+
+### Első release — v0.9.0
+
+**Státusz:** ✅ publikálva, a frissítési lánc végponttól végpontig igazolva.
+
+A repó publikus, a `v0.9.0` tag kiadva. A release öt asset-tel jelent meg: MSI és NSIS
+telepítő, mindkettőhöz `.sig`, plusz a `latest.json`.
+
+**Az első próbálkozás elhasalt**, és érdemes leírni, min. Mindkét telepítő rendben
+elkészült, majd az aláírás bukott: `Wrong password for that key`. Az ok nem a GitHub secret
+volt, hanem az én feltételezésem: a kulcsot `tauri signer generate -p ""`-vel generáltam,
+abban a hitben, hogy ez jelszó nélküli kulcsot ad. **Nem ad** — olyan kulcsot ad, ami aztán
+üres jelszóval sem hajlandó aláírni. Ez lokálisan is reprodukálódott, ami egy lépésben
+eldöntötte, hogy nem a CI-ban kell keresni.
+
+Újragenerálva valódi jelszóval, és **az aláírást lokálisan bizonyítottam, mielőtt bármi
+mást hozzáértem volna**. A README-ben is szerepel most, hogy a `-p ""` csapda.
+
+**A lánc igazolása** — nem következtetés, hanem lekérdezés:
+
+| Ellenőrzés | Eredmény |
+|------------|----------|
+| a `tauri.conf.json`-beli endpoint feloldódik | HTTP 200 |
+| `latest.json` verziója | 0.9.0 |
+| platform-célok | `windows-x86_64`, `-msi`, `-nsis` |
+| az aláírás kulcs-azonosítója | `20984d959b4fbea9` |
+| az appba fordított publikus kulcs azonosítója | `20984d959b4fbea9` — **egyezik** |
+
+Vagyis egy futó példány elfogadná ezt a frissítést.
+
+**Ami még nincs kipróbálva:** egy valódi in-app frissítés, azaz telepíteni a 0.9.0-t,
+kiadni egy 0.9.1-et, és végignézni, ahogy felajánlja és telepíti. Ehhez egy második
+kiadás kell.
