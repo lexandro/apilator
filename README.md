@@ -30,13 +30,24 @@ Built with Tauri v2, React 18 and TypeScript.
 
 ## Install
 
-Download the installer from the [latest release](https://github.com/lexandro/apilator/releases/latest).
+Download from the [latest release](https://github.com/lexandro/apilator/releases/latest).
+There are two installers and the difference matters:
 
-The installer is not code-signed, so Windows SmartScreen shows a warning the first time:
-choose **More info**, then **Run anyway**. Once installed, Apilator checks GitHub for
-updates in the background and offers them; update packages are signed and verified against
-a key built into the app, so an update can only come from this project. Nothing is
-downloaded or installed without you asking.
+| File | Installs for | Needs administrator |
+|------|--------------|---------------------|
+| `Apilator_x.y.z_x64-setup.exe` | the current user | no |
+| `Apilator_x.y.z_x64_en-US.msi` | the whole machine | yes |
+
+Use the `-setup.exe` unless you specifically want a machine-wide install. The MSI fails with
+error 1603 when run without elevation, which is what an unprivileged silent install looks
+like.
+
+Neither installer is code-signed, so Windows SmartScreen warns the first time: choose
+**More info**, then **Run anyway**.
+
+Once installed, Apilator checks GitHub for updates in the background and offers them.
+Update packages are signed and verified against a key built into the app, so an update can
+only come from this project. Nothing is downloaded or installed without you asking.
 
 ## Requirements
 
