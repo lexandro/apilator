@@ -1,0 +1,223 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Disable pointer events and text selection while resizing */
+body.resizing {
+  cursor: col-resize !important;
+}
+
+body.resizing * {
+  cursor: inherit !important;
+  user-select: none !important;
+}
+
+body.resizing iframe,
+body.resizing .response-body-content {
+  pointer-events: none;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sidebar container with resize handle */
+.sidebar-container {
+  display: flex;
+  position: relative;
+  width: calc(var(--resize-size, 280) * 1px);
+  min-width: 180px;
+  flex-shrink: 0;
+  contain: layout style;
+  transition: width var(--transition-normal), min-width var(--transition-normal);
+}
+
+.sidebar-container--collapsed {
+  width: 40px !important;
+  min-width: 40px !important;
+}
+
+.sidebar-container > .sidebar {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-request {
+  position: relative;
+  flex: 0 0 calc(var(--resize-size, 45) * 1%);
+  min-height: 150px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-border);
+  contain: layout style;
+}
+
+.app-response {
+  flex: 1;
+  min-height: 150px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  contain: layout style;
+}
+
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  z-index: 100;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Vékony csík a teljes peremen */
+.resize-handle::before {
+  content: '';
+  background-color: var(--color-border);
+  transition: background-color 0.15s ease;
+}
+
+.resize-handle--horizontal {
+  top: 0;
+  right: -5px;
+  width: 11px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+/* Függőleges csík végig (sidebar resizer) */
+.resize-handle--horizontal::before {
+  width: 1px;
+  height: 100%;
+}
+
+.resize-handle--vertical {
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  height: 11px;
+  cursor: row-resize;
+}
+
+/* Vízszintes csík végig (request/response resizer) */
+.resize-handle--vertical::before {
+  width: 100%;
+  height: 1px;
+}
+
+/* Hover és active állapot - világos szín */
+.resize-handle:hover::before,
+body.resizing .resize-handle::before {
+  background-color: #9ca3af;
+}
+
+/* Loading state */
+.app--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-message {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+/* Splash screen */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-primary);
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-image {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+}
+
+.app-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color, rgba(127, 127, 127, 0.2));
+}
+
+.app-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  flex-shrink: 0;
+  color: var(--color-info, #7aa2f7);
+  background: color-mix(in srgb, var(--color-info, #7aa2f7) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-info, #7aa2f7) 30%, transparent);
+}
+
+.app-update-banner__action {
+  padding: 2px 10px;
+  font-size: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
+.app-update-banner__dismiss {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.7;
+}

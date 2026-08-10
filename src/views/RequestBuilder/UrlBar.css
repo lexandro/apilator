@@ -1,0 +1,33 @@
+.url-bar {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+}
+
+.url-bar .url-input {
+  flex: 1;
+}
+
+.url-bar .url-input:focus {
+  z-index: 1;
+}
+
+.url-bar .send-button {
+  min-width: 80px;
+}
+
+.url-bar__save {
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border-color, rgba(127, 127, 127, 0.4));
+}
+
+.url-bar__save:hover {
+  background: var(--bg-hover, rgba(127, 127, 127, 0.12));
+}

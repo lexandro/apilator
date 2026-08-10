@@ -1,0 +1,76 @@
+.split-button {
+  display: flex;
+  position: relative;
+}
+
+.split-button__main {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.split-button__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.split-button__trigger:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.split-button__trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.split-button__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 180px;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.split-button__option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.split-button__option:hover {
+  background-color: var(--color-bg-secondary);
+}
+
+.split-button__option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+.split-button__option-label {
+  flex: 1;
+}

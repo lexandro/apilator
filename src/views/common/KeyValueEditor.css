@@ -1,0 +1,77 @@
+.kv-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.kv-editor__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.kv-editor__row {
+  display: grid;
+  grid-template-columns: 16px 1fr 1fr 70px 28px;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.kv-editor__row--disabled {
+  opacity: 0.5;
+}
+
+.kv-editor__row--disabled .kv-editor__input .input {
+  text-decoration: line-through;
+}
+
+.kv-editor__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.kv-editor__input {
+  min-width: 0;
+}
+
+.kv-editor__input .input {
+  height: 32px;
+  font-size: var(--font-size-sm);
+}
+
+.kv-editor__remove {
+  grid-column: 5;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}
+
+.kv-editor__remove:hover:not(:disabled) {
+  color: var(--color-error);
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.kv-editor__add {
+  align-self: flex-start;
+  color: var(--color-accent);
+}
+
+.kv-editor__add:hover:not(:disabled) {
+  color: var(--color-accent-hover);
+}
+
+.kv-editor__badge {
+  grid-column: 4;
+  justify-self: start;
+  padding: 2px var(--spacing-sm);
+  background-color: var(--color-accent-muted);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}

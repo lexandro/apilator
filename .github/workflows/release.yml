@@ -1,0 +1,47 @@
+name: Release
+
+# Push a version tag (v0.9.0) -> build the signed installers and publish them as a
+# GitHub Release. The updater in the app reads latest.json from the newest release,
+# so the signing secrets below are what make auto-update work at all.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: bun install --frozen-lockfile
+
+      - name: Build and publish the release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Generated with `bunx tauri signer generate`. Without these the build
+          # produces no latest.json and auto-update silently stops working.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Apilator ${{ github.ref_name }}"
+          releaseBody: |
+            See [CHANGELOG.md](https://github.com/lexandro/apilator/blob/main/CHANGELOG.md).
+
+            The installer is not code-signed, so Windows SmartScreen will warn on first run:
+            choose **More info** then **Run anyway**.
+          releaseDraft: false
+          prerelease: false

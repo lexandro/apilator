@@ -1,0 +1,91 @@
+.method-selector {
+  position: relative;
+}
+
+.method-selector__button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  min-width: 100px;
+  text-align: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0a0' d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.method-selector__button:hover:not(:disabled) {
+  background-color: var(--color-bg-secondary);
+}
+
+.method-selector__button:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.method-selector__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dropdown */
+.method-selector__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.method-selector__option {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family);
+  background: transparent;
+  border: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.method-selector__option:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.method-selector__option.active {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Method-specific colors for button */
+.method-selector__button.method-get { color: var(--color-method-get); }
+.method-selector__button.method-post { color: var(--color-method-post); }
+.method-selector__button.method-put { color: var(--color-method-put); }
+.method-selector__button.method-patch { color: var(--color-method-patch); }
+.method-selector__button.method-delete { color: var(--color-method-delete); }
+.method-selector__button.method-head,
+.method-selector__button.method-options { color: var(--color-text-secondary); }
+
+/* Method-specific colors for options */
+.method-selector__option.method-get { color: var(--color-method-get); }
+.method-selector__option.method-post { color: var(--color-method-post); }
+.method-selector__option.method-put { color: var(--color-method-put); }
+.method-selector__option.method-patch { color: var(--color-method-patch); }
+.method-selector__option.method-delete { color: var(--color-method-delete); }
+.method-selector__option.method-head,
+.method-selector__option.method-options { color: var(--color-text-secondary); }

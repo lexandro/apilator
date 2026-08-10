@@ -1,0 +1,103 @@
+.collections-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.collections-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
+.collections-panel__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.collections-panel__action {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.collections-panel__action:hover {
+  opacity: 1;
+}
+
+.collections-panel__warning {
+  margin: 0 8px 6px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--color-warning, #e0af68);
+  background: color-mix(in srgb, var(--color-warning, #e0af68) 12%, transparent);
+}
+
+.collections-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.collections-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 150px;
+  padding: 4px;
+  border-radius: 5px;
+  background: var(--bg-elevated, #23242f);
+  border: 1px solid var(--border-color, rgba(127, 127, 127, 0.35));
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.collections-menu__item {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.collections-menu__item:hover {
+  background: var(--bg-hover, rgba(127, 127, 127, 0.15));
+}
+
+.collections-menu__item--danger {
+  color: var(--color-error, #f7768e);
+}
+
+.collections-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.collections-panel__notice {
+  margin: 0 8px 6px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  cursor: pointer;
+  color: var(--color-success, #9ece6a);
+  background: color-mix(in srgb, var(--color-success, #9ece6a) 12%, transparent);
+}

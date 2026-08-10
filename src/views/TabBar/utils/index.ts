@@ -1,0 +1,1 @@
+export { getTabTitle } from './getTabTitle';

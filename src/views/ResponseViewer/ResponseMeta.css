@@ -1,0 +1,113 @@
+.response-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.response-status {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-mono);
+}
+
+.response-status.status-2xx {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--color-status-2xx);
+}
+
+.response-status.status-3xx {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: var(--color-status-3xx);
+}
+
+.response-status.status-4xx {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--color-status-4xx);
+}
+
+.response-status.status-5xx {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--color-status-5xx);
+}
+
+.response-time,
+.response-size {
+  color: var(--color-text-secondary);
+}
+
+.response-time::before {
+  content: '⏱';
+  margin-right: var(--spacing-xs);
+}
+
+.response-size::before {
+  content: '📦';
+  margin-right: var(--spacing-xs);
+}
+
+/* Network Info */
+.network-info {
+  position: relative;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.network-info__icon {
+  font-size: var(--font-size-sm);
+}
+
+.network-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-width: 220px;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+}
+
+.network-info:hover .network-tooltip {
+  display: block;
+}
+
+.network-tooltip__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xs) 0;
+}
+
+.network-tooltip__row:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.network-tooltip__label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.network-tooltip__value {
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+.response-tls-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-warning, #e0af68);
+  background: color-mix(in srgb, var(--color-warning, #e0af68) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #e0af68) 35%, transparent);
+}

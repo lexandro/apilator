@@ -1,0 +1,43 @@
+# Dependencies - soha ne olvasd
+node_modules/
+
+# Build outputs
+dist/
+target/
+src-tauri/target/
+
+# Lock files
+bun.lockb
+Cargo.lock
+
+# Git
+.git/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Generated/cached
+.cache/
+coverage/
+
+# Binary/media files
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# Misc
+*.tmp
+*.temp
+Thumbs.db
+.DS_Store

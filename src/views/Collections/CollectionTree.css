@@ -1,0 +1,75 @@
+.collection-tree {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+.collection-branch {
+  display: flex;
+  flex-direction: column;
+}
+
+.collection-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.collection-row:hover {
+  background: var(--bg-hover, rgba(127, 127, 127, 0.12));
+}
+
+.collection-row--selected {
+  background: var(--bg-active, rgba(127, 127, 127, 0.2));
+}
+
+.collection-row--dragging {
+  opacity: 0.4;
+}
+
+.collection-row--drop-inside {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  outline: 1px dashed currentColor;
+  outline-offset: -2px;
+}
+
+.collection-row--drop-before {
+  border-top-color: currentColor;
+}
+
+.collection-row--drop-after {
+  border-bottom-color: currentColor;
+}
+
+.collection-row__chevron {
+  font-size: 9px;
+  width: 10px;
+  flex-shrink: 0;
+  transition: transform 0.12s ease;
+}
+
+.collection-row__chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.collection-row__method {
+  font-size: 9px;
+  font-weight: 700;
+  width: 42px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.collection-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,126 @@
+.tabbar {
+  display: flex;
+  align-items: stretch;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  height: 40px;
+}
+
+.tabbar-tabs {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar but keep functionality */
+.tabbar-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabbar-scroll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 0;
+  background: var(--color-bg-tertiary);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.tabbar-scroll--left {
+  border-right: 1px solid var(--color-border);
+}
+
+.tabbar-scroll--right {
+  border-left: 1px solid var(--color-border);
+}
+
+.tabbar-scroll:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.tabbar-scroll:active {
+  background: var(--color-accent-muted);
+}
+
+.tabbar-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.tabbar-new--fixed {
+  border-left: 1px solid var(--color-border);
+}
+
+.tabbar-new:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.tabbar-new:active {
+  background: var(--color-accent-muted);
+}
+
+/* Drag ghost */
+.tab-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-width: 200px;
+}
+
+.tab-drag-ghost .tab-method {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.tab-drag-ghost .tab-method.get { color: var(--color-method-get); }
+.tab-drag-ghost .tab-method.post { color: var(--color-method-post); }
+.tab-drag-ghost .tab-method.put { color: var(--color-method-put); }
+.tab-drag-ghost .tab-method.patch { color: var(--color-method-patch); }
+.tab-drag-ghost .tab-method.delete { color: var(--color-method-delete); }
+
+.tab-drag-ghost .tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-drag-ghost .tab-pin {
+  font-size: 10px;
+}

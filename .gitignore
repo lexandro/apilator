@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+target/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+nul
+
+# Logs
+*.log
+firebase-debug.log
+npm-debug.log*
+
+# Tauri / Rust
+src-tauri/target/
+**/*.rs.bk
+src-tauri/gen/schemas/
+
+# Bun
+bun.lockb
+
+# Test coverage
+coverage/
+
+# Temp files
+*.tmp
+*.temp
+.cache/
+
+# Executables
+*.exe
+*.msi
+
+# Claude Code local settings
+.claude/settings.local.json

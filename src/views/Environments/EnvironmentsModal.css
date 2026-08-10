@@ -1,0 +1,131 @@
+.environments-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.environments-modal {
+  width: min(860px, 92vw);
+  height: min(560px, 86vh);
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-primary, #1a1b26);
+  border: 1px solid var(--border-color, rgba(127, 127, 127, 0.35));
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.environments-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, rgba(127, 127, 127, 0.25));
+}
+
+.environments-modal__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.environments-modal__close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.environments-modal__close:hover {
+  opacity: 1;
+}
+
+.environments-modal__body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+}
+
+.environments-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-color, rgba(127, 127, 127, 0.25));
+}
+
+.environments-modal__item {
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+
+.environments-modal__item:hover {
+  background: var(--bg-hover, rgba(127, 127, 127, 0.12));
+}
+
+.environments-modal__item--active {
+  background: var(--bg-active, rgba(127, 127, 127, 0.2));
+}
+
+.environments-modal__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+
+.environments-modal__detail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.environments-modal__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: 0.65;
+}
+
+.environments-modal__vars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.environments-modal__var {
+  display: grid;
+  grid-template-columns: auto 1fr 1.4fr auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.environments-modal__value {
+  min-width: 0;
+}
+
+.environments-modal__secret {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0.8;
+}

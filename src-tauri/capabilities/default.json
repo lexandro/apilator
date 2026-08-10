@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capabilities for the app",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-write-text-file",
+    "updater:default",
+    "process:default",
+    "core:app:allow-version"
+  ]
+}
