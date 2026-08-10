@@ -1278,7 +1278,7 @@ véd.
 |---|-------|---------|
 | 15 | Dokumentáció összevonása a README-be | ✅ kész |
 | 16 | Auto-update és Help felület | ✅ kész |
-| 17 | GitHub költözés és release pipeline | ⬜ |
+| 17 | GitHub költözés és release pipeline | 🟡 |
 
 ---
 
@@ -1363,8 +1363,8 @@ amit az mdedit kommentje is jelez.
 - [x] 17.2 Release workflow: tag → aláírt build → GitHub Release `latest.json`-nal
 - [x] 17.3 `.gitlab-ci.yml` eltávolítva
 - [x] 17.4 README, CONTRIBUTING, SECURITY átírva GitHubra
-- [ ] 17.5 Publikus repó létrehozása és feltöltés history nélkül
-- [ ] 17.6 Aláíró secretek felvétele
+- [x] 17.5 Repó létrehozva és feltöltve history nélkül (**privátként**, lásd napló)
+- [x] 17.6 Aláíró secretek felvéve
 - [ ] 17.7 Első release tag
 
 ### Napló
@@ -1373,3 +1373,30 @@ amit az mdedit kommentje is jelez.
 Windows-only, és a `secrets.rs` meg a `system_proxy.rs` valódi implementációja csak
 Windowson fordul — Linuxon a no-op fallback fordult, tehát a CI a szállított kódot nem is
 ellenőrizte. Most `windows-latest`.
+
+**A feltöltés megtörtént, de a repó egyelőre privát.** Ez tudatos döntés: a publikussá
+tétel visszafordíthatatlan (indexelődik, forkolható), ezért mindent elvégeztem addig a
+pontig, és a kapcsolót rád hagytam. Egy parancs:
+
+```powershell
+gh repo edit lexandro/apilator --visibility public --accept-visibility-change-consequences
+```
+
+**A history nélküli feltöltés.** A GitHubra egyetlen kezdő commit ment fel,
+`146177+lexandro@users.noreply.github.com` szerzővel — a valódi e-mail címed sehol nem
+jelenik meg. A teljes, 70 commitos fázisonkénti history a GitLab repóban maradt meg
+archívumként.
+
+Megjegyzés, amit tudnod érdemes: az **mdedit 145 publikus GitHub-commitja már most a valódi
+e-mail címedet viseli**, tehát ez a lépés csak az Apilatorra véd.
+
+**Publikálás előtti ellenőrzés.** A feltöltött 267 fájlon és a teljes korábbi historyn is
+lefutott a keresés: nincs benne API kulcs, token, jelszó, privát kulcs, felhő-credential
+vagy valódi e-mail cím. Az aláíró privát kulcs a repón kívül van (`~/.tauri/apilator.key`),
+a GitHub secretek közé viszont felkerült.
+
+Két kép menet közben bekerült egy `git add -A`-val, és kikerült: az `app_icon_trimmed.png`
+(652 kB, ismeretlen rendeltetésű munkafájl) és a `public/apilator_200x200.png` (semmi nem
+hivatkozza, de a `public/` miatt a telepítőbe került volna).
+
+**Az első GitHub CI zöld**, mindkét jobbal.
