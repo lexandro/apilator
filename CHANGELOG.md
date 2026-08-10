@@ -5,6 +5,17 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-08-10
+
+### Fixed
+
+- The changelog viewer broke lines wherever the source file happened to wrap rather than at
+  the edge of the panel, so a single bullet arrived as several paragraphs with gaps between
+  them. Hard-wrapped lines are now folded back into the block they belong to and the panel
+  wraps them itself
+- Code spans and links showed their markup — literal backticks and `[text](url)` — because the
+  viewer rendered whole lines and never looked inside them
+
 ## [0.9.2] - 2026-08-10
 
 ### Fixed

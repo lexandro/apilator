@@ -1523,3 +1523,15 @@
 .changelog-section__body h4 { font-size: 12px; margin: 10px 0 4px; opacity: 0.8; }
 .changelog-section__body li { margin-left: 18px; }
 .changelog-section__body p { margin: 4px 0; }
+
+.changelog-section__body code {
+  padding: 1px 4px;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.changelog-section__link {
+  color: var(--color-accent);
+}

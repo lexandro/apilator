@@ -1,7 +1,7 @@
 {
   "name": "apilator",
   "private": true,
-  "version": "0.9.2",
+  "version": "0.9.3",
   "type": "module",
   "scripts": {
     "predev": "taskkill /F /IM node.exe /T 2>nul || exit 0",
