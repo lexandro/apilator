@@ -5,6 +5,19 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-08-10
+
+No functional changes. This release exists to exercise the update mechanism end to end,
+which 0.9.0 could not do: there was nothing installed to update from.
+
+### Changed
+
+- The repository is now entirely in English. ARCHITECTURE.md and the engineering log were
+  folded into the README or removed rather than translated, since both had drifted from the
+  code and the layer rules they described are enforced by lint anyway
+- Line endings normalised via .gitattributes. The tree had been 143 LF, 53 CRLF and 3 files
+  mixed within themselves, so a one-line comment change showed as 2212 changed lines
+
 ## [0.9.0] - 2026-08-10
 
 First public release. Everything below is relative to the unreleased 0.1.0 state.
@@ -61,4 +74,5 @@ First public release. Everything below is relative to the unreleased 0.1.0 state
 - Content Security Policy added; the full Tauri API is no longer exposed on `window`
 - JWT headers cannot claim an algorithm other than the one actually used for signing
 
-[0.9.0]: https://gitlab.com/lexandro2000/apilator/-/releases/v0.9.0
+[0.9.1]: https://github.com/lexandro/apilator/releases/tag/v0.9.1
+[0.9.0]: https://github.com/lexandro/apilator/releases/tag/v0.9.0
