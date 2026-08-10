@@ -105,7 +105,10 @@ It needs two repository secrets, produced by `bunx tauri signer generate`:
 | Secret | Contents |
 |--------|----------|
 | `TAURI_SIGNING_PRIVATE_KEY` | the private key file's contents |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | its password, empty if the key has none |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | its password |
+
+Generate the key with a real password. `tauri signer generate -p ""` does not produce a
+password-less key, it produces one that then refuses to sign.
 
 Losing the private key means existing installations can no longer verify updates and would
 have to be reinstalled by hand. Keep a backup outside the repository.
