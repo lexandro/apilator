@@ -1,0 +1,15 @@
+# Line endings are normalised in the repository so a diff shows content, not carriage
+# returns. Before this, the tree was 143 LF, 53 CRLF and 3 files mixed within themselves.
+* text=auto eol=lf
+
+# Windows scripts keep CRLF: cmd.exe cannot parse a .bat with bare LF, and .ps1 is kept
+# consistent with them.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.ico binary
+*.icns binary
+*.jpg binary
+*.bundle binary
