@@ -34,7 +34,7 @@ fix on purpose once and check the test goes red.
 
 **Respect the layer boundaries.** Views render; anything touching the backend goes through a
 hook or a store; the domain layer stays free of frameworks. This is enforced by ESLint, so
-you will find out quickly. `ARCHITECTURE.md` has the detail.
+you will find out quickly. The README has the layer table.
 
 **No feature that only half works.** A switch in the settings that does nothing, or a body
 type that silently sends nothing, is worse than not offering it — most of this project's

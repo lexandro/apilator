@@ -124,10 +124,26 @@ have to be reinstalled by hand. Keep a backup outside the repository.
 | Domain | `src/domain/` | Types, factories and pure logic; framework-free |
 | Backend | `src-tauri/src/` | Rust: HTTP client, persistence, secrets, JWT |
 
-The boundaries are enforced by ESLint, not just documented: a view importing a service, or
-the domain importing React, fails the lint. [ARCHITECTURE.md](ARCHITECTURE.md) has the
-rationale, and [docs/ENGINEERING_LOG.md](docs/ENGINEERING_LOG.md) records how the codebase
-got into this shape, with the before-and-after measurements.
+The point of the layering is not tidiness. It is that the interesting logic — the collection
+tree, variable substitution, state migration, request building — can be tested without
+rendering anything, and that a change to the UI cannot quietly reach into the network layer.
+
+| Layer | May import | May not import |
+|-------|------------|----------------|
+| Views | stores, hooks, domain, other views | services, `@tauri-apps/*` |
+| Hooks | stores, services, domain | views |
+| Stores | services, domain | views |
+| Services | domain, Tauri APIs | stores, views, hooks |
+| Domain | nothing | everything else, frameworks included |
+
+**ESLint enforces this**, it is not just documentation: the `no-restricted-imports` rules in
+`eslint.config.js` fail the build when a view imports a service or the domain imports a
+framework. A new violation cannot land unnoticed — the rule caught one during the refactor
+that introduced it, which a manual review had missed.
+
+When adding something, put the logic as far down as it will go. Anything in `domain/` or
+`utils/` can be tested directly, which is why those layers carry the highest coverage
+requirements.
 
 ### Domain
 

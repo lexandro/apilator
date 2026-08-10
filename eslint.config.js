@@ -33,7 +33,7 @@ export default tseslint.config(
     },
   },
   {
-    // Layer boundaries from ARCHITECTURE.md, enforced rather than documented.
+    // Layer boundaries from the README, enforced rather than documented.
     // Views render; anything that talks to the backend goes through a hook or a store.
     files: ['src/views/**/*.{ts,tsx}', 'src/App.tsx'],
     rules: {
@@ -44,7 +44,7 @@ export default tseslint.config(
             {
               group: ['**/services', '**/services/*'],
               message:
-                'Views must not import services. Go through a store or a hook (see ARCHITECTURE.md).',
+                'Views must not import services. Go through a store or a hook.',
             },
             {
               group: ['@tauri-apps/*'],

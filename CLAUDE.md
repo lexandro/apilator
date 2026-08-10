@@ -12,8 +12,8 @@ Do not assume; ask when a decision would change the work.
 
 ## Where things are
 
-`ARCHITECTURE.md` has the layers, the module map and the import rules. `README.md` has the
-feature list, the commands and the release process. Do not duplicate either here.
+`README.md` has the layers, the module map, the import rules, the feature list and the
+release process. Do not duplicate it here.
 
 ## Commands
 
