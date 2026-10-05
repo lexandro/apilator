@@ -34,7 +34,7 @@ export function Dropdown<T = string>({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(containerRef, () => setIsOpen(false), isOpen);
+  useClickOutside([containerRef, menuRef], () => setIsOpen(false), isOpen);
 
   // Update menu position when opened
   useEffect(() => {
