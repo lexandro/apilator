@@ -350,6 +350,166 @@ describe('collectionFromOpenApi', () => {
     expect(requestsOf(result.collection.children)[0].request.body.type).toBe('none');
   });
 
+  it('resolves a $ref schema in the request body', () => {
+    const result = importOf(
+      spec({
+        paths: {
+          '/users': {
+            post: {
+              requestBody: {
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/User' } },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            User: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                address: { $ref: '#/components/schemas/Address' },
+                tags: { type: 'array', items: { $ref: '#/components/schemas/Tag' } },
+              },
+            },
+            Address: { type: 'object', properties: { city: { type: 'string', example: 'Pécs' } } },
+            Tag: { type: 'string', enum: ['admin', 'user'] },
+          },
+        },
+      })
+    );
+
+    const body = requestsOf(result.collection.children)[0].request.body;
+    expect(JSON.parse(body.raw.content)).toEqual({
+      name: 'string',
+      address: { city: 'Pécs' },
+      tags: ['admin'],
+    });
+  });
+
+  it('resolves a $ref request body', () => {
+    const result = importOf(
+      spec({
+        paths: {
+          '/users': {
+            post: { requestBody: { $ref: '#/components/requestBodies/NewUser' } },
+          },
+        },
+        components: {
+          requestBodies: {
+            NewUser: {
+              content: {
+                'application/json': {
+                  schema: { type: 'object', properties: { email: { type: 'string' } } },
+                },
+              },
+            },
+          },
+        },
+      })
+    );
+
+    expect(JSON.parse(requestsOf(result.collection.children)[0].request.body.raw.content)).toEqual({
+      email: 'string',
+    });
+  });
+
+  it('merges allOf and takes the first oneOf branch', () => {
+    const result = importOf(
+      spec({
+        paths: {
+          '/pets': {
+            post: {
+              requestBody: {
+                content: {
+                  'application/json': {
+                    schema: {
+                      allOf: [
+                        { $ref: '#/components/schemas/Base' },
+                        {
+                          type: 'object',
+                          properties: {
+                            kind: { oneOf: [{ type: 'integer' }, { type: 'string' }] },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: { Base: { type: 'object', properties: { id: { type: 'integer' } } } },
+        },
+      })
+    );
+
+    expect(JSON.parse(requestsOf(result.collection.children)[0].request.body.raw.content)).toEqual({
+      id: 0,
+      kind: 0,
+    });
+  });
+
+  it('resolves a $ref parameter', () => {
+    const result = importOf(
+      spec({
+        paths: {
+          '/users': {
+            get: { parameters: [{ $ref: '#/components/parameters/Limit' }] },
+          },
+        },
+        components: {
+          parameters: {
+            Limit: { name: 'limit', in: 'query', required: true, schema: { type: 'integer', default: 20 } },
+          },
+        },
+      })
+    );
+
+    const [param] = requestsOf(result.collection.children)[0].request.params;
+    expect([param.key, param.value, param.enabled]).toEqual(['limit', '20', true]);
+  });
+
+  it('stops at a self-referencing schema instead of recursing forever', () => {
+    const result = importOf(
+      spec({
+        paths: {
+          '/nodes': {
+            post: {
+              requestBody: {
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/Node' } },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Node: {
+              type: 'object',
+              properties: { name: { type: 'string' }, parent: { $ref: '#/components/schemas/Node' } },
+            },
+          },
+        },
+      })
+    );
+
+    expect(JSON.parse(requestsOf(result.collection.children)[0].request.body.raw.content)).toEqual({
+      name: 'string',
+      parent: null,
+    });
+  });
+
+  it('treats a $ref that points nowhere as an unknown schema', () => {
+    expect(exampleForSchema({ $ref: '#/components/schemas/Missing' }, {})).toBeNull();
+    expect(exampleForSchema({ $ref: 'other.yaml#/User' }, {})).toBeNull();
+  });
+
   it('handles an empty paths object', () => {
     const result = importOf(spec({ paths: {} }));
 

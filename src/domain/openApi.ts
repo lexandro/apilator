@@ -33,15 +33,71 @@ export function baseUrlOf(spec: UnknownRecord): string {
 }
 
 /**
+ * Follows a local JSON pointer such as #/components/schemas/User. A reference into another
+ * document cannot be followed from here and resolves to undefined.
+ */
+function resolvePointer(root: unknown, ref: string): unknown {
+  if (!ref.startsWith('#/')) return undefined;
+
+  let node = root;
+  for (const segment of ref.slice(2).split('/')) {
+    if (!isRecord(node)) return undefined;
+    node = node[decodeURIComponent(segment).replace(/~1/g, '/').replace(/~0/g, '~')];
+  }
+
+  return node;
+}
+
+const MAX_REF_CHAIN = 16;
+
+/** A request body or parameter given as a $ref, replaced by what it points at. */
+function dereference(value: unknown, root: unknown): unknown {
+  let current = value;
+
+  for (let i = 0; i < MAX_REF_CHAIN && isRecord(current); i++) {
+    if (typeof current.$ref !== 'string') return current;
+    current = resolvePointer(root, current.$ref);
+  }
+
+  return isRecord(current) && typeof current.$ref !== 'string' ? current : undefined;
+}
+
+/**
  * A small example value for a schema. Prefers whatever the spec states outright before
  * falling back to a placeholder for the type.
+ *
+ * `root` is the whole document, for resolving $ref. `seen` holds the references on the
+ * current path only, so a schema used twice side by side is expanded both times while a
+ * schema that contains itself stops at null.
  */
-export function exampleForSchema(schema: unknown, depth = 0): unknown {
+export function exampleForSchema(
+  schema: unknown,
+  root: unknown = null,
+  depth = 0,
+  seen: ReadonlySet<string> = new Set()
+): unknown {
   if (!isRecord(schema) || depth > 6) return null;
+
+  if (typeof schema.$ref === 'string') {
+    if (seen.has(schema.$ref)) return null;
+    const target = resolvePointer(root, schema.$ref);
+    return exampleForSchema(target, root, depth, new Set([...seen, schema.$ref]));
+  }
 
   if (schema.example !== undefined) return schema.example;
   if (schema.default !== undefined) return schema.default;
   if (Array.isArray(schema.enum) && schema.enum.length > 0) return schema.enum[0];
+
+  if (Array.isArray(schema.allOf) && schema.allOf.length > 0) {
+    const own = isRecord(schema.properties) ? [{ properties: schema.properties }] : [];
+    const parts = [...schema.allOf, ...own].map((part) => exampleForSchema(part, root, depth, seen));
+    return parts.every(isRecord) ? Object.assign({}, ...parts) : (parts.find((p) => p !== null) ?? null);
+  }
+
+  const variants = Array.isArray(schema.oneOf) ? schema.oneOf : schema.anyOf;
+  if (Array.isArray(variants) && variants.length > 0) {
+    return exampleForSchema(variants[0], root, depth, seen);
+  }
 
   const type = str(schema.type) || (isRecord(schema.properties) ? 'object' : '');
 
@@ -50,12 +106,12 @@ export function exampleForSchema(schema: unknown, depth = 0): unknown {
       const properties = isRecord(schema.properties) ? schema.properties : {};
       const result: UnknownRecord = {};
       for (const [name, child] of Object.entries(properties)) {
-        result[name] = exampleForSchema(child, depth + 1);
+        result[name] = exampleForSchema(child, root, depth + 1, seen);
       }
       return result;
     }
     case 'array':
-      return [exampleForSchema(schema.items, depth + 1)];
+      return [exampleForSchema(schema.items, root, depth + 1, seen)];
     case 'integer':
     case 'number':
       return 0;
@@ -68,8 +124,13 @@ export function exampleForSchema(schema: unknown, depth = 0): unknown {
   }
 }
 
-function requestBodyFor(operation: UnknownRecord, request: HttpRequest): HttpRequest['body'] {
-  const body = isRecord(operation.requestBody) ? operation.requestBody : null;
+function requestBodyFor(
+  operation: UnknownRecord,
+  request: HttpRequest,
+  root: UnknownRecord
+): HttpRequest['body'] {
+  const resolved = dereference(operation.requestBody, root);
+  const body = isRecord(resolved) ? resolved : null;
   const content = body && isRecord(body.content) ? body.content : null;
   if (!content) return request.body;
 
@@ -77,7 +138,8 @@ function requestBodyFor(operation: UnknownRecord, request: HttpRequest): HttpReq
   if (!json || !isRecord(json[1])) return request.body;
 
   const media = json[1];
-  const example = media.example !== undefined ? media.example : exampleForSchema(media.schema);
+  const example =
+    media.example !== undefined ? media.example : exampleForSchema(media.schema, root);
 
   return {
     ...request.body,
@@ -88,19 +150,21 @@ function requestBodyFor(operation: UnknownRecord, request: HttpRequest): HttpReq
 
 function parametersFor(
   operation: UnknownRecord,
-  shared: unknown[]
+  shared: unknown[],
+  root: UnknownRecord
 ): { params: KeyValuePair[]; headers: KeyValuePair[] } {
   const own = Array.isArray(operation.parameters) ? operation.parameters : [];
   const params: KeyValuePair[] = [];
   const headers: KeyValuePair[] = [];
 
-  for (const raw of [...shared, ...own]) {
+  for (const entry of [...shared, ...own]) {
+    const raw = dereference(entry, root);
     if (!isRecord(raw)) continue;
 
     const name = str(raw.name);
     if (!name) continue;
 
-    const example = exampleForSchema(raw.schema);
+    const example = exampleForSchema(raw.schema, root);
     const value = example === null || typeof example === 'object' ? '' : String(example);
     // Optional parameters come in disabled, so a freshly imported request runs as-is.
     const enabled = raw.required === true;
@@ -159,7 +223,7 @@ export function collectionFromOpenApi(spec: unknown): OpenApiImportResult | null
       if (!isRecord(operationRaw)) continue;
 
       const defaults = createEmptyRequest();
-      const { params, headers } = parametersFor(operationRaw, shared);
+      const { params, headers } = parametersFor(operationRaw, shared, spec);
 
       const request: HttpRequest = {
         ...defaults,
@@ -168,7 +232,7 @@ export function collectionFromOpenApi(spec: unknown): OpenApiImportResult | null
         url: `${baseUrl}${pathToTemplate(path)}`,
         params,
         headers: [...defaults.headers, ...headers],
-        body: requestBodyFor(operationRaw, defaults),
+        body: requestBodyFor(operationRaw, defaults, spec),
       };
 
       const node = createRequestNode(request.name, request);
