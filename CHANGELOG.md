@@ -5,6 +5,30 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-10-05
+
+### Fixed
+
+- The auth type dropdown could not be changed with the mouse. Its menu is rendered outside
+  the dropdown, so the mousedown on an option counted as a click outside and closed the
+  menu before the click arrived
+- The multipart Form Data editor rendered unstyled: it used class names no stylesheet
+  defined. It now shares the layout of the other key/value editors
+- Importing an OpenAPI document whose request bodies use `$ref` produced `{}` as the
+  example body. Local references to schemas, request bodies and parameters are now
+  followed, `allOf` is merged and the first `oneOf`/`anyOf` branch is used, with
+  self-referencing schemas cut off instead of looping
+- SECURITY.md claimed there was no update check. There is, and it now says when it runs
+  and what it sends
+
+### Security
+
+- The Basic password, Bearer token and JWT secret on a request's Auth tab were saved in the
+  clear in the state and collections files. They are now encrypted with Windows DPAPI for
+  the current user; files from an older version are read as before and encrypted on the
+  next save
+- Exported collections no longer include those credentials
+
 ## [0.9.3] - 2026-08-10
 
 ### Fixed
