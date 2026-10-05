@@ -10,6 +10,7 @@ export type {
   JwtAuthConfig,
   JwtAlgorithm,
   JwtTarget,
+  CredentialField,
 } from './auth';
 export {
   createNoAuth,
@@ -20,6 +21,8 @@ export {
   computeAuthHeader,
   hasAuthHeader,
   getAuthTypeLabel,
+  credentialFieldOf,
+  withoutCredential,
 } from './auth';
 
 // ============================================================

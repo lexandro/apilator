@@ -81,6 +81,28 @@ export function createJwtAuth(): JwtAuthConfig {
   };
 }
 
+export type CredentialField = 'password' | 'token' | 'secret';
+
+/** The field of an auth config that holds its credential, which must not reach a file in the clear. */
+export function credentialFieldOf(type: unknown): CredentialField | null {
+  switch (type) {
+    case 'basic':
+      return 'password';
+    case 'bearer':
+      return 'token';
+    case 'jwt':
+      return 'secret';
+    default:
+      return null;
+  }
+}
+
+/** The same config with its credential blanked, for sharing with someone else. */
+export function withoutCredential(auth: AuthConfig): AuthConfig {
+  const field = credentialFieldOf(auth.type);
+  return field ? ({ ...auth, [field]: '' } as AuthConfig) : auth;
+}
+
 /**
  * The Authorization header value this config produces, or null when it produces none.
  * JWT returns null here because signing needs the backend; see httpService.resolveAuth.

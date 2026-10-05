@@ -11,8 +11,9 @@ import {
   STATE_VERSION,
   type AppState,
 } from './persistenceService';
-import { createEmptyRequest } from '../domain';
-import type { Tab, HistoryEntry } from '../domain';
+import { clearSealedCache } from './credentialsService';
+import { createEmptyRequest, createJwtAuth, createNoAuth } from '../domain';
+import type { Tab, HistoryEntry, AuthConfig } from '../domain';
 
 const invokeMock = vi.mocked(invoke);
 
@@ -554,5 +555,182 @@ describe('saveAppState', () => {
     invokeMock.mockRejectedValue(new Error('disk full'));
 
     await expect(persistenceService.saveAppState([], 'a', [], [])).resolves.toBeUndefined();
+  });
+});
+
+// ============================================================
+// Credentials
+// ============================================================
+
+describe('request credentials', () => {
+  /** Reversible stand-in for DPAPI that never contains the plaintext it hides. */
+  const fakeSeal = (value: string) => `sealed:${btoa(value).split('').reverse().join('')}`;
+  const fakeOpen = (value: string) =>
+    value.startsWith('sealed:') ? atob(value.slice(7).split('').reverse().join('')) : null;
+
+  let stored: string | null = null;
+
+  function withFakeBackend({ failSeal = false } = {}) {
+    invokeMock.mockImplementation(async (command: string, payload?: unknown) => {
+      const args = payload as { values?: string[]; yamlContent?: string };
+      if (command === 'protect_values') {
+        if (failSeal) throw new Error('DPAPI unavailable');
+        return args.values!.map(fakeSeal);
+      }
+      if (command === 'unprotect_values') return args.values!.map(fakeOpen);
+      if (command === 'save_data') stored = args.yamlContent!;
+      if (command === 'load_data') return stored;
+      return undefined;
+    });
+  }
+
+  function tabWith(id: string, auth: AuthConfig): Tab {
+    return {
+      id,
+      request: { ...createEmptyRequest(), url: `https://api.test/${id}`, auth },
+      requestState: { status: 'idle' },
+      isDirty: false,
+    };
+  }
+
+  function historyWith(auth: AuthConfig): HistoryEntry[] {
+    return [
+      {
+        id: 'h1',
+        timestamp: 1,
+        request: tabWith('h', auth).request,
+        response: { status: 200, statusText: 'OK', size: 0, time: 0 },
+      },
+    ];
+  }
+
+  const basic: AuthConfig = { type: 'basic', username: 'ann', password: 'hunter2-PLAIN' };
+  const bearer: AuthConfig = { type: 'bearer', token: 'eyJ-TOKEN-PLAIN' };
+  const jwt: AuthConfig = { ...createJwtAuth(), secret: 'JWT-SECRET-PLAIN' };
+
+  beforeEach(() => {
+    stored = null;
+    clearSealedCache();
+  });
+
+  it('never writes a password, token or JWT secret in the clear', async () => {
+    withFakeBackend();
+
+    await persistenceService.saveAppState(
+      [tabWith('a', basic), tabWith('b', jwt)],
+      'a',
+      historyWith(bearer),
+      [tabWith('c', bearer)]
+    );
+
+    expect(stored).not.toBeNull();
+    expect(stored).not.toContain('hunter2-PLAIN');
+    expect(stored).not.toContain('eyJ-TOKEN-PLAIN');
+    expect(stored).not.toContain('JWT-SECRET-PLAIN');
+    expect(YAML.parse(stored!).tabs[0].request.auth.password).toEqual({
+      dpapi: fakeSeal('hunter2-PLAIN'),
+    });
+  });
+
+  it('keeps everything else in the auth config readable', async () => {
+    withFakeBackend();
+
+    await persistenceService.saveAppState([tabWith('a', basic)], 'a', [], []);
+
+    const auth = YAML.parse(stored!).tabs[0].request.auth;
+    expect([auth.type, auth.username]).toEqual(['basic', 'ann']);
+  });
+
+  it('restores the credentials of tabs, closed tabs and history on load', async () => {
+    withFakeBackend();
+    await persistenceService.saveAppState(
+      [tabWith('a', basic)],
+      'a',
+      historyWith(jwt),
+      [tabWith('c', bearer)]
+    );
+
+    const state = (await persistenceService.loadAppState())!;
+
+    expect(persistenceService.stateToTabs(state)[0].request.auth).toEqual(basic);
+    expect(persistenceService.stateToClosedTabs(state)[0].request.auth).toEqual(bearer);
+    expect(persistenceService.stateToHistory(state)[0].request.auth).toEqual(jwt);
+  });
+
+  it('loads a plaintext credential written before encryption, and seals it on the next save', async () => {
+    withFakeBackend();
+    stored = YAML.stringify(validState({ tabs: [savedTab({ request: tabWith('a', basic).request })] }));
+
+    const tabs = persistenceService.stateToTabs((await persistenceService.loadAppState())!);
+    expect(tabs[0].request.auth).toEqual(basic);
+
+    await persistenceService.saveAppState(tabs, tabs[0].id, [], []);
+    expect(stored).not.toContain('hunter2-PLAIN');
+  });
+
+  it('drops a credential that cannot be decrypted instead of failing the load', async () => {
+    withFakeBackend();
+    const request = {
+      ...tabWith('a', basic).request,
+      auth: { ...basic, password: { dpapi: 'written-by-another-account' } },
+    };
+    const entry = { id: 'h1', timestamp: 1, request, response: { status: 200 } };
+    stored = YAML.stringify(validState({ tabs: [savedTab({ request })], history: [entry] as never }));
+
+    const state = await persistenceService.loadAppState();
+
+    expect(persistenceService.stateToTabs(state!)[0].request.auth).toEqual({ ...basic, password: '' });
+    expect(persistenceService.stateToHistory(state!)[0].request.auth).toEqual({ ...basic, password: '' });
+  });
+
+  it('leaves a credential out rather than writing it in the clear when sealing fails', async () => {
+    withFakeBackend({ failSeal: true });
+
+    await persistenceService.saveAppState([tabWith('a', basic)], 'a', [], []);
+
+    expect(stored).not.toContain('hunter2-PLAIN');
+    expect(YAML.parse(stored!).tabs[0].request.auth).toEqual({
+      type: 'basic',
+      username: 'ann',
+      password: '',
+    });
+  });
+
+  it('does not ask the backend again for credentials it has already sealed', async () => {
+    withFakeBackend();
+
+    await persistenceService.saveAppState([tabWith('a', basic)], 'a', [], []);
+    await persistenceService.saveAppState([tabWith('a', basic)], 'a', [], []);
+
+    const sealCalls = invokeMock.mock.calls.filter(([command]) => command === 'protect_values');
+    expect(sealCalls).toHaveLength(1);
+  });
+
+  it('writes saves in the order they were made, even when an earlier one is slower', async () => {
+    let releaseFirst!: () => void;
+    const firstSealed = new Promise<void>((resolve) => (releaseFirst = resolve));
+    const writes: string[] = [];
+
+    invokeMock.mockImplementation(async (command: string, payload?: unknown) => {
+      const args = payload as { values?: string[]; yamlContent?: string };
+      if (command === 'protect_values') {
+        if (args.values!.includes('hunter2-PLAIN')) await firstSealed;
+        return args.values!.map(fakeSeal);
+      }
+      if (command === 'save_data') writes.push(YAML.parse(args.yamlContent!).activeTabId);
+      return undefined;
+    });
+
+    const first = persistenceService.saveAppState([tabWith('first', basic)], 'first', [], []);
+    const second = persistenceService.saveAppState(
+      [tabWith('second', createNoAuth())],
+      'second',
+      [],
+      []
+    );
+    setTimeout(releaseFirst, 20);
+    await Promise.all([first, second]);
+
+    expect(writes).toEqual(['first', 'second']);
   });
 });

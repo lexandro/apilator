@@ -5,8 +5,9 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 import { invoke } from '@tauri-apps/api/core';
 import YAML from 'yaml';
 import { collectionsService, parseCollections, COLLECTIONS_VERSION } from './collectionsService';
+import { clearSealedCache } from './credentialsService';
 import { createEmptyRequest } from '../domain';
-import type { Collection } from '../domain';
+import type { AuthConfig, Collection, CollectionFolderNode, CollectionRequestNode } from '../domain';
 
 const invokeMock = vi.mocked(invoke);
 
@@ -304,5 +305,74 @@ describe('importFromText', () => {
 
   it('returns null for an empty file', () => {
     expect(collectionsService.importFromText('')).toBeNull();
+  });
+});
+
+// ============================================================
+// Credentials
+// ============================================================
+
+describe('request credentials', () => {
+  const fakeSeal = (value: string) => `sealed:${btoa(value).split('').reverse().join('')}`;
+  const fakeOpen = (value: string) =>
+    value.startsWith('sealed:') ? atob(value.slice(7).split('').reverse().join('')) : null;
+
+  let stored: string | null = null;
+
+  beforeEach(() => {
+    stored = null;
+    clearSealedCache();
+    invokeMock.mockImplementation(async (command: string, payload?: unknown) => {
+      const args = payload as { values?: string[]; yamlContent?: string };
+      if (command === 'protect_values') return args.values!.map(fakeSeal);
+      if (command === 'unprotect_values') return args.values!.map(fakeOpen);
+      if (command === 'save_data') stored = args.yamlContent!;
+      if (command === 'load_data') return stored;
+      return undefined;
+    });
+  });
+
+  const bearer: AuthConfig = { type: 'bearer', token: 'COLLECTION-TOKEN-PLAIN' };
+
+  function treeWith(auth: AuthConfig): Collection[] {
+    const collections = tree();
+    const folder = collections[0].children[0] as CollectionFolderNode;
+    const node = folder.children[0] as CollectionRequestNode;
+    node.request = { ...node.request, auth };
+    return collections;
+  }
+
+  function firstRequest(collections: Collection[]) {
+    const folder = collections[0].children[0] as CollectionFolderNode;
+    return (folder.children[0] as CollectionRequestNode).request;
+  }
+
+  it('does not write a credential to the collections file in the clear', async () => {
+    await collectionsService.save(treeWith(bearer));
+
+    expect(stored).not.toContain('COLLECTION-TOKEN-PLAIN');
+    expect(stored).toContain('dpapi');
+  });
+
+  it('gives the credential back on load', async () => {
+    await collectionsService.save(treeWith(bearer));
+
+    expect(firstRequest(await collectionsService.load()).auth).toEqual(bearer);
+  });
+
+  it('leaves the credential out of an export but keeps the rest of the auth', () => {
+    const exported = collectionsService.serialize(treeWith(bearer));
+
+    expect(exported).not.toContain('COLLECTION-TOKEN-PLAIN');
+    const imported = collectionsService.importFromText(exported)!;
+    expect(firstRequest(imported.collections).auth).toEqual({ type: 'bearer', token: '' });
+  });
+
+  it('blanks a still-sealed credential in an imported file instead of using the object', async () => {
+    await collectionsService.save(treeWith(bearer));
+
+    const imported = collectionsService.importFromText(stored!)!;
+
+    expect(firstRequest(imported.collections).auth).toEqual({ type: 'bearer', token: '' });
   });
 });

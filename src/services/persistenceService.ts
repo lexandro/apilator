@@ -11,6 +11,7 @@ import type {
   HttpMethod,
 } from '../domain';
 import { createNoAuth, createEmptyRequest, createJwtAuth } from '../domain';
+import { credentialsService, type StoredRequest } from './credentialsService';
 
 export const STATE_VERSION = 2;
 
@@ -24,7 +25,7 @@ export interface AppState {
 
 interface SavedTab {
   id: string;
-  request: HttpRequest;
+  request: HttpRequest | StoredRequest;
   isDirty: boolean;
   name?: string;
   color?: string | null;
@@ -286,34 +287,83 @@ async function loadAppState(): Promise<AppState | null> {
     return null;
   }
 
-  return migrated;
+  return openCredentials(migrated);
 }
 
-async function saveAppState(
+/** Decrypts the credentials of every saved request: open tabs, closed tabs and history. */
+async function openCredentials(state: AppState): Promise<AppState> {
+  const groups: unknown[][] = [state.tabs, state.closedTabs ?? [], state.history ?? []];
+  const opened = await credentialsService.openRequests(
+    groups.flat().map((item) => (isRecord(item) ? item.request : undefined))
+  );
+
+  let next = 0;
+  const reattach = (list: unknown[]) =>
+    list.map((item) => {
+      const request = opened[next++];
+      return isRecord(item) ? { ...item, request } : item;
+    });
+
+  const tabs = reattach(state.tabs);
+  const closedTabs = state.closedTabs && reattach(state.closedTabs);
+  const history = state.history && reattach(state.history);
+
+  return { ...state, tabs, closedTabs, history } as AppState;
+}
+
+/**
+ * Saves run one after another. Sealing credentials makes a save asynchronous before it
+ * writes, and without the queue a slow earlier save could land after a later one.
+ */
+let saveQueue: Promise<void> = Promise.resolve();
+
+function saveAppState(
   tabs: Tab[],
   activeTabId: string,
   history: HistoryEntry[],
   closedTabs: Tab[] = []
 ): Promise<void> {
+  saveQueue = saveQueue.then(() => writeAppState(tabs, activeTabId, history, closedTabs));
+  return saveQueue;
+}
+
+async function writeAppState(
+  tabs: Tab[],
+  activeTabId: string,
+  history: HistoryEntry[],
+  closedTabs: Tab[]
+): Promise<void> {
   try {
+    const stored = await credentialsService.sealRequests([
+      ...tabs.map((tab) => tab.request),
+      ...closedTabs.map((tab) => tab.request),
+      ...history.map((entry) => entry.request),
+    ]);
+
+    let next = 0;
     const toSavedTab = (tab: Tab): SavedTab => ({
       id: tab.id,
-      request: tab.request,
+      request: stored[next++],
       isDirty: tab.isDirty,
       name: tab.name,
       color: tab.color,
       pinned: tab.pinned,
     });
 
+    const savedTabs = tabs.map(toSavedTab);
+    const savedClosedTabs = closedTabs.map(toSavedTab);
+    const savedHistory = history.map((entry) => ({
+      ...entry,
+      request: stored[next++] as unknown as HttpRequest,
+      response: toHistorySummary(entry.response),
+    }));
+
     const state: AppState = {
       version: STATE_VERSION,
-      tabs: tabs.map(toSavedTab),
+      tabs: savedTabs,
       activeTabId,
-      history: history.map((entry) => ({
-        ...entry,
-        response: toHistorySummary(entry.response),
-      })),
-      closedTabs: closedTabs.map(toSavedTab),
+      history: savedHistory,
+      closedTabs: savedClosedTabs,
     };
 
     const yamlContent = YAML.stringify(state, { indent: 2, lineWidth: 0 });

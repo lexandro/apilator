@@ -25,6 +25,7 @@ tauri-plugin-process = "2.3.1"
 [target.'cfg(windows)'.dependencies]
 keyring = { version = "3", features = ["windows-native"] }
 winreg = "0.56.0"
+windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
 
 [profile.release]
 panic = "abort"

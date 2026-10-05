@@ -25,8 +25,9 @@ Built with Tauri v2, React 18 and TypeScript.
   (JSON or YAML), which arrives grouped into folders by tag with example bodies filled in
 - **History** — the last 50 requests, grouped by day, one click to load one back into a tab
 - **Proxy** — system, environment or a custom proxy with authentication
-- **Security** — TLS certificate verification on by default with an explicit opt-out, and
-  proxy passwords kept in the Windows Credential Manager rather than on disk
+- **Security** — TLS certificate verification on by default with an explicit opt-out,
+  proxy passwords kept in the Windows Credential Manager rather than on disk, and Auth tab
+  credentials encrypted with Windows DPAPI in the saved files and left out of exports
 
 ## Install
 
@@ -183,6 +184,7 @@ but know nothing about stores, views or hooks.
 | `collectionsService` | collections file, plus export and import |
 | `environmentsService` | environments file, keeping secret values out of it |
 | `secretsService` | the Windows Credential Manager |
+| `credentialsService` | sealing Auth tab credentials with DPAPI on save, opening them on load |
 | `fileService` / `systemService` | file dialogs, app and OS info |
 
 ### Stores
@@ -204,6 +206,7 @@ Zustand. State plus the logic around it; they call services, never the other way
 | `http_client.rs` | pooled reqwest clients, streaming reads, cancellation, multipart |
 | `persistence.rs` | atomic writes and backups for every data file |
 | `secrets.rs` | Windows Credential Manager |
+| `protected_data.rs` | DPAPI encryption for request credentials |
 | `jwt.rs` | HMAC JWT signing |
 | `system_proxy.rs` | the Windows proxy setting, so credentials can be attached |
 
@@ -216,7 +219,9 @@ Application data lives in `%LOCALAPPDATA%\Apilator\`:
 | `apilator-environments.yaml` | environments and non-secret variables |
 
 Secret values — proxy passwords and variables marked secret — are never written to these
-files. They go to the Windows Credential Manager.
+files. They go to the Windows Credential Manager. Auth tab credentials (Basic password,
+Bearer token, JWT secret) are written to the state and collections files, but only as
+DPAPI ciphertext for the current Windows user.
 
 ## Icons
 

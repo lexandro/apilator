@@ -1,6 +1,7 @@
 pub mod http_client;
 pub mod jwt;
 pub mod persistence;
+pub mod protected_data;
 pub mod secrets;
 pub mod system_proxy;
 pub mod system_info;
@@ -8,6 +9,7 @@ pub mod system_info;
 use http_client::{cancel_request, send_request};
 use jwt::sign_jwt;
 use persistence::{backup_data, get_data_path, load_data, save_data};
+use protected_data::{protect_values, unprotect_values};
 use secrets::{delete_secret, get_secret, set_secret};
 use system_info::{get_arch, get_system_info};
 
@@ -29,6 +31,8 @@ pub fn run() {
             get_secret,
             set_secret,
             delete_secret,
+            protect_values,
+            unprotect_values,
             get_system_info,
             get_arch
         ])

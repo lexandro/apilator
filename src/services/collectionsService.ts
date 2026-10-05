@@ -1,7 +1,14 @@
 import { invoke } from '@tauri-apps/api/core';
 import YAML from 'yaml';
-import type { Collection, CollectionNode, HttpRequest } from '../domain';
-import { createEmptyRequest, collectionFromOpenApi, isOpenApiSpec } from '../domain';
+import type { AuthConfig, Collection, CollectionNode, HttpRequest } from '../domain';
+import {
+  createEmptyRequest,
+  collectionFromOpenApi,
+  credentialFieldOf,
+  isOpenApiSpec,
+  withoutCredential,
+} from '../domain';
+import { credentialsService } from './credentialsService';
 
 export const COLLECTIONS_VERSION = 1;
 
@@ -18,6 +25,69 @@ function isRecord(value: unknown): value is UnknownRecord {
 
 function str(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+/**
+ * A credential that is not text by now is one still sealed, as in the collections file
+ * itself imported as an export. It cannot be used, so it is blanked.
+ */
+function withTextCredential(request: HttpRequest): HttpRequest {
+  const auth = request.auth as unknown as UnknownRecord;
+  const field = isRecord(auth) ? credentialFieldOf(auth.type) : null;
+  if (!field || typeof auth[field] === 'string') return request;
+  return { ...request, auth: { ...auth, [field]: '' } as unknown as AuthConfig };
+}
+
+/** Applies `map` to every request in the tree, depth first. */
+function mapRequests(
+  collections: Collection[],
+  map: (request: HttpRequest) => unknown
+): Collection[] {
+  const visit = (node: CollectionNode): CollectionNode =>
+    node.kind === 'request'
+      ? { ...node, request: map(node.request) as HttpRequest }
+      : { ...node, children: node.children.map(visit) };
+
+  return collections.map((collection) => ({
+    ...collection,
+    children: collection.children.map(visit),
+  }));
+}
+
+/** Decrypts sealed credentials in a parsed file, before it is repaired into runtime shape. */
+async function openCredentials(raw: unknown): Promise<unknown> {
+  if (!isRecord(raw) || !Array.isArray(raw.collections)) return raw;
+
+  // Both walks below must visit nodes in the same order.
+  const found: unknown[] = [];
+  const collect = (nodes: unknown) => {
+    if (!Array.isArray(nodes)) return;
+    for (const node of nodes) {
+      if (!isRecord(node)) continue;
+      if (node.kind === 'request') found.push(node.request);
+      else collect(node.children);
+    }
+  };
+  raw.collections.forEach((collection) => isRecord(collection) && collect(collection.children));
+
+  const opened = await credentialsService.openRequests(found);
+
+  let next = 0;
+  const rebuild = (nodes: unknown): unknown =>
+    Array.isArray(nodes)
+      ? nodes.map((node) => {
+          if (!isRecord(node)) return node;
+          if (node.kind === 'request') return { ...node, request: opened[next++] };
+          return { ...node, children: rebuild(node.children) };
+        })
+      : nodes;
+
+  return {
+    ...raw,
+    collections: raw.collections.map((collection) =>
+      isRecord(collection) ? { ...collection, children: rebuild(collection.children) } : collection
+    ),
+  };
 }
 
 /**
@@ -47,7 +117,10 @@ function toRuntimeNode(value: unknown): CollectionNode | null {
       kind: 'request',
       id,
       name: str(value.name, 'Request'),
-      request: { ...createEmptyRequest(), ...(value.request as Partial<HttpRequest>) },
+      request: withTextCredential({
+        ...createEmptyRequest(),
+        ...(value.request as Partial<HttpRequest>),
+      }),
     };
   }
 
@@ -109,7 +182,7 @@ async function load(): Promise<Collection[]> {
     return [];
   }
 
-  const collections = parseCollections(parsed);
+  const collections = parseCollections(await openCredentials(parsed));
   if (!collections) {
     const version = isRecord(parsed) && typeof parsed.version === 'number' ? parsed.version : null;
     console.error(`Collections file version ${version ?? 'unknown'} cannot be read`);
@@ -120,9 +193,24 @@ async function load(): Promise<Collection[]> {
   return collections;
 }
 
-async function save(collections: Collection[]): Promise<void> {
+/** Saves run in order; see the same queue in persistenceService. */
+let saveQueue: Promise<void> = Promise.resolve();
+
+function save(collections: Collection[]): Promise<void> {
+  saveQueue = saveQueue.then(() => write(collections));
+  return saveQueue;
+}
+
+async function write(collections: Collection[]): Promise<void> {
   try {
-    const file: CollectionsFile = { version: COLLECTIONS_VERSION, collections };
+    const requests: HttpRequest[] = [];
+    mapRequests(collections, (request) => requests.push(request));
+    const stored = await credentialsService.sealRequests(requests);
+
+    let next = 0;
+    const sealed = mapRequests(collections, () => stored[next++]);
+
+    const file: CollectionsFile = { version: COLLECTIONS_VERSION, collections: sealed };
     const yamlContent = YAML.stringify(file, { indent: 2, lineWidth: 0 });
     await invoke('save_data', { kind: 'collections', yamlContent });
   } catch (error) {
@@ -130,9 +218,17 @@ async function save(collections: Collection[]): Promise<void> {
   }
 }
 
-/** Serialised form, for writing to a file the user chooses. */
+/**
+ * Serialised form, for writing to a file the user chooses. Credentials are left out: an
+ * export is for sharing, and the sealed form would not open on another account anyway.
+ */
 export function serialize(collections: Collection[]): string {
-  return YAML.stringify({ version: COLLECTIONS_VERSION, collections }, {
+  const shareable = mapRequests(collections, (request) => ({
+    ...request,
+    auth: withoutCredential(request.auth),
+  }));
+
+  return YAML.stringify({ version: COLLECTIONS_VERSION, collections: shareable }, {
     indent: 2,
     lineWidth: 0,
   });
