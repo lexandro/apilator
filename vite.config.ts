@@ -49,6 +49,9 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["src/test/setup.ts"],
+    // Stylesheets are stubbed out in tests, except when imported with ?raw: the
+    // FormDataEditor test reads them to check every rendered class has a rule.
+    css: { include: [/\.css\?raw$/] },
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

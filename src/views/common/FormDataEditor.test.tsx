@@ -151,6 +151,46 @@ describe('file rows', () => {
   });
 });
 
+const stylesheets = import.meta.glob<string>('/src/**/*.css', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+/** Every class name that some stylesheet under src/ has a rule for. */
+function styledClassNames(): Set<string> {
+  const names = new Set<string>();
+
+  for (const source of Object.values(stylesheets)) {
+    const css = source.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const match of css.matchAll(/\.([A-Za-z_][\w-]*)/g)) names.add(match[1]);
+  }
+
+  return names;
+}
+
+describe('styling', () => {
+  it('only uses class names that a stylesheet defines', () => {
+    const { container } = render(
+      <FormDataEditor
+        items={[textRow(), { ...fileRow(), id: 'row-2' }]}
+        onChange={vi.fn()}
+        onPickFile={vi.fn()}
+      />
+    );
+    const styled = styledClassNames();
+    // Positive control: a probe that finds nothing would pass every class as unstyled.
+    expect(styled.has('kv-editor__row')).toBe(true);
+
+    const used = new Set(
+      [...container.querySelectorAll('[class]')].flatMap((el) => [...el.classList])
+    );
+    const unstyled = [...used].filter((name) => !styled.has(name));
+
+    expect(unstyled).toEqual([]);
+  });
+});
+
 describe('empty state', () => {
   it('still offers a way to add the first row', async () => {
     const { onChange, user } = setup([]);

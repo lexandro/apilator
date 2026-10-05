@@ -1,16 +1,20 @@
+/* Rows reuse the kv-editor grid; the badge column holds the text/file switch here. */
+
 .form-data-row__file {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1;
+  gap: var(--spacing-sm);
   min-width: 0;
+  height: 32px;
 }
 
 .form-data-row__browse {
+  flex-shrink: 0;
   white-space: nowrap;
   max-width: 16ch;
   overflow: hidden;
   text-overflow: ellipsis;
+  border: 1px dashed var(--color-border);
 }
 
 .form-data-row__path {
@@ -19,11 +23,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
-  opacity: 0.6;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .form-data-row__kind {
+  grid-column: 4;
+  justify-self: start;
   min-width: 4.5ch;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
