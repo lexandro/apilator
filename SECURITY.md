@@ -10,15 +10,23 @@ get an initial response within a week.
 
 ## What this app does with your data
 
-Apilator is a desktop client. Nothing is sent anywhere except the HTTP requests you
-explicitly make. There is no telemetry, no update check, and no network traffic the app
-starts on its own.
+Apilator is a desktop client. There is no telemetry. Apart from the HTTP requests you
+make, the only network traffic the app starts on its own is the update check: five seconds
+after start and every six hours after that, it fetches the release manifest
+(`latest.json`) from this project's GitHub releases. It carries nothing from your requests,
+collections or environments; like any request, it shows GitHub your IP address. See
+[Updates](#updates).
 
 **Stored on disk**, under `%LOCALAPPDATA%\Apilator\`:
 
 - open tabs and request history — request details only; response bodies are not kept
 - saved collections
 - environments, excluding the values of variables marked secret
+
+The credential on a request's Auth tab — the Basic password, the Bearer token or the JWT
+secret — is written to these files encrypted with Windows DPAPI for your user account, not
+in the clear. Copied to another machine or another Windows account, the files load without
+those credentials.
 
 **Stored in the Windows Credential Manager:**
 
@@ -48,6 +56,7 @@ query parameters, body and auth fields, so a secret in an environment variable w
 in whatever request references it. That is the point, but it means a request shared from
 history or a collection can carry one.
 
-**Exported collections contain request details as written.** If a request has a hardcoded
-token in a header, exporting it exports the token. Use a secret environment variable if you
+**Exported collections leave out Auth tab credentials, but nothing else.** The password,
+token or JWT secret is blanked in an export. A token typed straight into a header, a query
+parameter or the body is exported as written. Use a secret environment variable if you
 intend to share the collection.
